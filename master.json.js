@@ -8,7 +8,7 @@ window["STRd6/crash:master"]({
     },
     "main.coffee.md": {
       "path": "main.coffee.md",
-      "content": "We need to bootstrap our whole system.\n\n    echo = PACKAGE.distribution.echo.content\n\nRun a command from the cli\n\n    STDOUT = (value) ->\n      # TODO: Do something for real\n      console.log value\n\n    exec = (command) ->\n      [command, args...] = command.split /\\s/\n\n      exe = echo # TODO look up command \n      Function(command, \"ARGV\", \"STDOUT\", exe)(exe, args, STDOUT)\n\nRun a subshell.\n\nRun a 'GUI' app.\n\nRun a 'Terminal' app.\n\n\n    exec 'echo a b'\n\nPipe input to output among running apps.\n\nList running processes.\n\nKill processes.\n\nSTDIO\n",
+      "content": "We need to bootstrap our whole system.\n\n    echo = PACKAGE.distribution.echo.content\n\nRun a command from the cli\n\n    STDOUT = (value) ->\n      # TODO: Do something for real\n      console.log value\n\n    exec = (command) ->\n      [command, args...] = command.split /\\s/\n\n      exe = echo # TODO look up command \n      Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", exe)(command, args, STDOUT)\n\nRun a subshell.\n\nRun a 'GUI' app.\n\nRun a 'Terminal' app.\n\n\n    exec 'echo a b'\n\nPipe input to output among running apps.\n\nList running processes.\n\nKill processes.\n\nSTDIO\n",
       "mode": "100644"
     },
     "pixie.cson": {
@@ -25,7 +25,7 @@ window["STRd6/crash:master"]({
   "distribution": {
     "main": {
       "path": "main",
-      "content": "(function() {\n  var STDOUT, echo, exec,\n    __slice = [].slice;\n\n  echo = PACKAGE.distribution.echo.content;\n\n  STDOUT = function(value) {\n    return console.log(value);\n  };\n\n  exec = function(command) {\n    var args, exe, _ref;\n    _ref = command.split(/\\s/), command = _ref[0], args = 2 <= _ref.length ? __slice.call(_ref, 1) : [];\n    exe = echo;\n    return Function(command, \"ARGV\", \"STDOUT\", exe)(exe, args, STDOUT);\n  };\n\n  exec('echo a b');\n\n}).call(this);\n",
+      "content": "(function() {\n  var STDOUT, echo, exec,\n    __slice = [].slice;\n\n  echo = PACKAGE.distribution.echo.content;\n\n  STDOUT = function(value) {\n    return console.log(value);\n  };\n\n  exec = function(command) {\n    var args, exe, _ref;\n    _ref = command.split(/\\s/), command = _ref[0], args = 2 <= _ref.length ? __slice.call(_ref, 1) : [];\n    exe = echo;\n    return Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", exe)(command, args, STDOUT);\n  };\n\n  exec('echo a b');\n\n}).call(this);\n",
       "type": "blob"
     },
     "pixie": {
