@@ -12,7 +12,7 @@ Run a command from the cli
       [command, args...] = command.split /\s/
 
       exe = echo # TODO look up command 
-      Function(command, "ARGV", "STDOUT", exe)(exe, args, STDOUT)
+      Function("$PROGRAM_NAME", "ARGV", "STDOUT", exe)(command, args, STDOUT)
 
 Run a subshell.
 
