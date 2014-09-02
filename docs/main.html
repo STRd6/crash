@@ -19,9 +19,13 @@
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
               <p>We need to bootstrap our whole system.</p>
+<p>Commands for testing</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">echo = PACKAGE.distribution.echo.content</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">commands = {}
+
+[<span class="string">"echo"</span>, <span class="string">"cat"</span>].forEach (name) -&gt;
+  commands[name] = PACKAGE.distribution[name].content</code></pre>
 </div>
         </li>
         
@@ -38,11 +42,14 @@
   <span class="comment"># TODO: Do something for real</span>
   console.log value
 
+<span class="comment"># TODO: Implement for real</span>
+<span class="function"><span class="title">STDIN</span></span> = (handler) -&gt;
+
 <span class="function"><span class="title">exec</span></span> = (command) -&gt;
   [command, args...] = command.split <span class="regexp">/\s/</span>
 
-  exe = echo <span class="comment"># TODO look up command </span>
-  Function(<span class="string">"$PROGRAM_NAME"</span>, <span class="string">"ARGV"</span>, <span class="string">"STDOUT"</span>, exe)(command, args, STDOUT)</code></pre>
+  exe = commands[command]
+  Function(<span class="string">"$PROGRAM_NAME"</span>, <span class="string">"ARGV"</span>, <span class="string">"STDOUT"</span>, <span class="string">"STDIN"</span>, exe)(command, args, STDOUT, STDIN)</code></pre>
 </div>
         </li>
         
@@ -57,7 +64,8 @@
 <p>Run a &#39;Terminal&#39; app.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">exec <span class="string">'echo a b'</span></code></pre>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Handle pipe</span>
+exec <span class="string">'echo hello | cat'</span></code></pre>
 </div>
         </li>
         
@@ -70,6 +78,7 @@
               <p>Pipe input to output among running apps.</p>
 <p>List running processes.</p>
 <p>Kill processes.</p>
+<p>Explore a filesystem.</p>
 <p>STDIO</p>
 
             </div>

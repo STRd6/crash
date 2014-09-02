@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>index</title>
+  <title>cat</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="http://strd6.github.io/cdn/parallel/docco.css" />
@@ -18,14 +18,11 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <p>We need to bootstrap our whole system.</p>
-<p>Commands for testing</p>
+              <h1 id="cat">cat</h1>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">commands = {}
-
-[<span class="string">"echo"</span>, <span class="string">"cat"</span>].forEach (name) -&gt;
-  commands[name] = PACKAGE.distribution[name].content</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">
+</code></pre>
 </div>
         </li>
         
@@ -35,55 +32,10 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p>Run a command from the cli</p>
+              <p>Print everythnig from STDIN to STDOUT</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">STDOUT</span></span> = (value) -&gt;
-  <span class="comment"># TODO: Do something for real</span>
-  console.log value
-
-<span class="comment"># TODO: Implement for real</span>
-<span class="function"><span class="title">STDIN</span></span> = (handler) -&gt;
-
-<span class="function"><span class="title">exec</span></span> = (command) -&gt;
-  [command, args...] = command.split <span class="regexp">/\s/</span>
-
-  exe = commands[command]
-  Function(<span class="string">"$PROGRAM_NAME"</span>, <span class="string">"ARGV"</span>, <span class="string">"STDOUT"</span>, <span class="string">"STDIN"</span>, exe)(command, args, STDOUT, STDIN)</code></pre>
-</div>
-        </li>
-        
-        
-        <li id="section-3">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-3">&#182;</a>
-              </div>
-              <p>Run a subshell.</p>
-<p>Run a &#39;GUI&#39; app.</p>
-<p>Run a &#39;Terminal&#39; app.</p>
-
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Handle pipe</span>
-exec <span class="string">'echo hello | cat'</span></code></pre>
-</div>
-        </li>
-        
-        
-        <li id="section-4">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-4">&#182;</a>
-              </div>
-              <p>Pipe input to output among running apps.</p>
-<p>List running processes.</p>
-<p>Kill processes.</p>
-<p>Explore a filesystem.</p>
-<p>STDIO</p>
-
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript">
-</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">STDIN STDOUT</code></pre>
 </div>
         </li>
         
