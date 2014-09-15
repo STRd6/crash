@@ -34,11 +34,13 @@
               </div>
               <p>This setup is to bootstrap the system to execute processes in the context of
 web workers.</p>
-<p>TODO: How to get PACKAGE/require working within processes</p>
+<p><code>self</code> in this context is the global</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># Function(PACKAGE.dependencies.require.distribution.main.content)()</span>
-<span class="comment"># Require.generateFor(PACKAGE)('./' + PACKAGE.entryPoint)</span></code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">self.<span class="function"><span class="title">STDOUT</span></span> = (data) -&gt;
+  postMessage
+    type: <span class="string">"STDOUT"</span>
+    message: data</code></pre>
 </div>
         </li>
         
@@ -48,13 +50,15 @@ web workers.</p>
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <p><code>self</code> in this context is the global</p>
+              <p>Set up require and boot from the entry point</p>
+<p>TODO: Fix getting require working!!!!!!!!1</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">self.<span class="function"><span class="title">STDOUT</span></span> = (data) -&gt;
-  postMessage
-    type: <span class="string">"STDOUT"</span>
-    message: data</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># Function(PACKAGE.dependencies.require.distribution.main.content)()</span>
+<span class="comment"># require = Require.generateFor(PACKAGE)</span>
+<span class="comment"># require("./#{PACKAGE.entryPoint}")</span>
+
+Function(PACKAGE.distribution.main)()</code></pre>
 </div>
         </li>
         
