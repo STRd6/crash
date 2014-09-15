@@ -1,11 +1,12 @@
 Process = require "../process"
 
 describe "process", ->
-  it "should spawn a web worker and do stuff", ->
+  it "should spawn a web worker and do stuff", (done) ->
     p = Process("STDOUT('hello world')")
 
     p.STDOUT (data) ->
       assert.equal data, "hello world"
+      done()
 
   describe "echo", ->
     echo = PACKAGE.distribution.echo.content

@@ -3,19 +3,28 @@ Process
 
 Create an run a process. (A fancily wrapped web worker).
 
-    # TODO: Is there a better way to handle system bootstrap/requires
-    setupCode = PACKAGE.distribution.proc_setup.content
+    # TODO: Is there a better way to handle system bootstrapping?
+    boot = PACKAGE.distribution.proc_setup.content
 
     module.exports = (programCode, args=[]) ->
 
       # Set up program environment with a wrapper
       # that provides STDOUT, ARGV, and anything else this "OS" provides
 
+      pkg =
+        entryPoint: "main"
+        distribution:
+          main: programCode
+          dude: programCode
+          test: "console.log('hello')"
+        dependencies:
+          require: PACKAGE.dependencies.require
+
       resourceUrl = URL.createObjectURL(new Blob([
+        "PACKAGE=#{JSON.stringify(pkg)}\n", # Set up PACKAGE
         "ARGV=#{JSON.stringify(args)};\n", # Set up ARGV
-        setupCode,
-        programCode
-      ]))
+        boot
+      ], type: "application/javascript"))
 
       worker = new Worker(resourceUrl)
 
@@ -33,6 +42,7 @@ Create an run a process. (A fancily wrapped web worker).
             console.log "Unknown type"
 
       worker.onerror = (e) ->
+        console.log e
         errHandlers.forEach (handler) ->
           handler e
 
