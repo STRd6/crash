@@ -5,6 +5,13 @@ describe "process", ->
     p = Process("STDOUT('hello world')")
 
     p.STDOUT (data) ->
-      console.log data
+      assert.equal data, "hello world"
 
-    assert p
+  describe "echo", ->
+    echo = PACKAGE.distribution.echo.content
+    it "should echo command line args", (done) ->
+      p = Process(echo, ["hello", "duderman"])
+
+      p.STDOUT (data) ->
+        assert.equal data, "hello duderman"
+        done()

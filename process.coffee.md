@@ -3,26 +3,23 @@ Process
 
 Create an run a process. (A fancily wrapped web worker).
 
-    # TODO: Load this from a compiled file
-    setupCode = """
-      var STDOUT = function(data) {
-        postMessage({
-          type: "STDOUT",
-          message: data
-        });
-      };
-    """
+    # TODO: Is there a better way to handle system bootstrap/requires
+    setupCode = PACKAGE.distribution.proc_setup.content
 
-    module.exports = (programCode) ->
+    module.exports = (programCode, args=[]) ->
 
-      # TODO: Need to set up program environment with a wrapper
-      # that provides STDOUT and anything else this "OS" provides
-      
-      resourceUrl = URL.createObjectURL(new Blob([setupCode, programCode]))
+      # Set up program environment with a wrapper
+      # that provides STDOUT, ARGV, and anything else this "OS" provides
+
+      resourceUrl = URL.createObjectURL(new Blob([
+        "ARGV=#{JSON.stringify(args)};\n", # Set up ARGV
+        setupCode,
+        programCode
+      ]))
 
       worker = new Worker(resourceUrl)
 
-      worker.onmessage = ({data}) ->        
+      worker.onmessage = ({data}) ->
         {type, message} = data
 
         switch type
