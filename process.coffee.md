@@ -14,9 +14,8 @@ Create an run a process. (A fancily wrapped web worker).
       pkg =
         entryPoint: "main"
         distribution:
-          main: programCode
-          dude: programCode
-          test: "console.log('hello')"
+          main: 
+            content: programCode
         dependencies:
           require: PACKAGE.dependencies.require
 
