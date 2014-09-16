@@ -46,9 +46,8 @@ module.<span class="function"><span class="title">exports</span></span> = (progr
   pkg =
     entryPoint: <span class="string">"main"</span>
     distribution:
-      main: programCode
-      dude: programCode
-      test: <span class="string">"console.log('hello')"</span>
+      main: 
+        content: programCode
     dependencies:
       require: PACKAGE.dependencies.require
 

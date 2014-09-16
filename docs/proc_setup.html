@@ -51,14 +51,11 @@ web workers.</p>
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
               <p>Set up require and boot from the entry point</p>
-<p>TODO: Fix getting require working!!!!!!!!1</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># Function(PACKAGE.dependencies.require.distribution.main.content)()</span>
-<span class="comment"># require = Require.generateFor(PACKAGE)</span>
-<span class="comment"># require("./#{PACKAGE.entryPoint}")</span>
+            <div class="content"><pre><code class="lang-coffeescript">Function(PACKAGE.dependencies.require.distribution.main.content)()
 
-Function(PACKAGE.distribution.main)()</code></pre>
+Require.generateFor(PACKAGE)(<span class="string">"./<span class="subst">#{PACKAGE.entryPoint}</span>"</span>)</code></pre>
 </div>
         </li>
         
