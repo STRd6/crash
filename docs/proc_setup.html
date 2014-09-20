@@ -40,7 +40,20 @@ web workers.</p>
             <div class="content"><pre><code class="lang-coffeescript">self.<span class="function"><span class="title">STDOUT</span></span> = (data) -&gt;
   postMessage
     type: <span class="string">"STDOUT"</span>
-    message: data</code></pre>
+    message: data
+
+inputHandler = <span class="literal">null</span>
+self.<span class="function"><span class="title">STDIN</span></span> = (handler) -&gt;
+  inputHandler = handler
+
+self.<span class="function"><span class="title">onmessage</span></span> = ({data}) -&gt;
+  {type, message} = data
+
+  <span class="keyword">switch</span> type
+    <span class="keyword">when</span> <span class="string">"STDIN"</span>
+      inputHandler?(message)
+    <span class="keyword">when</span> <span class="string">"SIGTERM"</span>
+      self.close()</code></pre>
 </div>
         </li>
         

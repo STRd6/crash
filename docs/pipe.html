@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>process</title>
+  <title>pipe</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="http://strd6.github.io/cdn/parallel/docco.css" />
@@ -18,7 +18,7 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <h1 id="process">Process</h1>
+              <h1 id="pipe">Pipe</h1>
 
             </div>
             <div class="content"><pre><code class="lang-coffeescript">
@@ -32,65 +32,19 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p>Create an run a process. (A fancily wrapped web worker).</p>
+              <p>Connect processes!</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Is there a better way to handle system bootstrapping?</span>
-boot = PACKAGE.distribution.proc_setup.content
+            <div class="content"><pre><code class="lang-coffeescript">module.exports = 
+  connect: (procs...) -&gt;
+    procs.forEach (left, index) -&gt;
+      right = procs[index + <span class="number">1</span>]
 
-module.exports = 
-  exec: (programCode, args=[]) -&gt;
+      <span class="keyword">if</span> right
+        left.STDOUT right.STDIN
 
-    <span class="comment"># Set up program environment with a wrapper</span>
-    <span class="comment"># that provides STDOUT, ARGV, and anything else this "OS" provides</span>
-
-    pkg =
-      entryPoint: <span class="string">"main"</span>
-      distribution:
-        main:
-          content: programCode
-      dependencies:
-        require: PACKAGE.dependencies.require
-
-    resourceUrl = URL.createObjectURL(<span class="keyword">new</span> Blob([
-      <span class="string">"PACKAGE=<span class="subst">#{JSON.stringify(pkg)}</span>\n"</span>, <span class="comment"># Set up PACKAGE</span>
-      <span class="string">"ARGV=<span class="subst">#{JSON.stringify(args)}</span>;\n"</span>, <span class="comment"># Set up ARGV</span>
-      boot
-    ], type: <span class="string">"application/javascript"</span>))
-
-    worker = <span class="keyword">new</span> Worker(resourceUrl)
-
-    worker.<span class="function"><span class="title">onmessage</span></span> = ({data}) -&gt;
-      {type, message} = data
-
-      <span class="keyword">switch</span> type
-        <span class="keyword">when</span> <span class="string">"STDOUT"</span>
-          handlers.forEach (handler) -&gt;
-            handler message
-        <span class="keyword">when</span> <span class="string">"STDERR"</span>
-          errHandlers.forEach (handler) -&gt;
-            handler message
-        <span class="keyword">else</span>
-          console.log <span class="string">"Unknown type"</span>
-
-    worker.<span class="function"><span class="title">onerror</span></span> = (e) -&gt;
-      console.log e
-      errHandlers.forEach (handler) -&gt;
-        handler e
-
-    <span class="comment"># TODO: should we only allow one handler per channel?</span>
-    handlers = []
-    errHandlers = []
-
-    STDIN: (data) -&gt;
-      <span class="comment"># Pass data to process' STDIN</span>
-      worker.postMessage
-        type: <span class="string">"STDIN"</span>
-        message: data
-    STDERR: (handler) -&gt;
-      errHandlers.push handler
-    STDOUT: (handler) -&gt;
-      handlers.push handler</code></pre>
+    STDOUT: procs[procs.length-<span class="number">1</span>].STDOUT
+    STDIN: procs[<span class="number">0</span>].STDIN</code></pre>
 </div>
         </li>
         
