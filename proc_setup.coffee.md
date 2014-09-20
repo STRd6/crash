@@ -11,6 +11,19 @@ web workers.
         type: "STDOUT"
         message: data
 
+    inputHandler = null
+    self.STDIN = (handler) ->
+      inputHandler = handler
+
+    self.onmessage = ({data}) ->
+      {type, message} = data
+
+      switch type
+        when "STDIN"
+          inputHandler?(message)
+        when "SIGTERM"
+          self.close()
+
 Set up require and boot from the entry point
 
     Function(PACKAGE.dependencies.require.distribution.main.content)()
