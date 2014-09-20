@@ -7,29 +7,14 @@ Commands for testing
     ["echo", "cat"].forEach (name) ->
       commands[name] = PACKAGE.distribution[name].content
 
-Run a command from the cli
+    OS = require "./os"
 
-    STDOUT = (value) ->
-      # TODO: Do something for real
-      console.log value
-
-    # TODO: Implement for real
-    STDIN = (handler) ->
-
+    # TODO: Hook up a real shell
     exec = (command) ->
       [command, args...] = command.split /\s/
 
       exe = commands[command]
       Function("$PROGRAM_NAME", "ARGV", "STDOUT", "STDIN", exe)(command, args, STDOUT, STDIN)
-
-Run a subshell.
-
-Run a 'GUI' app.
-
-Run a 'Terminal' app.
-
-    # TODO: Handle pipe
-    exec 'echo hello | cat'
 
 Pipe input to output among running apps.
 
@@ -39,4 +24,4 @@ Kill processes.
 
 Explore a filesystem.
 
-STDIO
+    require("./terminal")(OS.Process.exec(commands.cat))
