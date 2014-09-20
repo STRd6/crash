@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>main</title>
+  <title>yes</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="http://strd6.github.io/cdn/parallel/docco.css" />
@@ -18,39 +18,10 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <p>We need to bootstrap our whole system.</p>
-<p>Commands for testing</p>
-
+              
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">commands = {}
-
-[<span class="string">"echo"</span>, <span class="string">"cat"</span>].forEach (name) -&gt;
-  commands[name] = PACKAGE.distribution[name].content
-
-OS = require <span class="string">"./os"</span>
-
-<span class="comment"># TODO: Hook up a real shell</span>
-<span class="function"><span class="title">exec</span></span> = (command) -&gt;
-  [command, args...] = command.split <span class="regexp">/\s/</span>
-
-  exe = commands[command]
-  Function(<span class="string">"$PROGRAM_NAME"</span>, <span class="string">"ARGV"</span>, <span class="string">"STDOUT"</span>, <span class="string">"STDIN"</span>, exe)(command, args, STDOUT, STDIN)</code></pre>
-</div>
-        </li>
-        
-        
-        <li id="section-2">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-2">&#182;</a>
-              </div>
-              <p>Pipe input to output among running apps.</p>
-<p>List running processes.</p>
-<p>Kill processes.</p>
-<p>Explore a filesystem.</p>
-
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript">require(<span class="string">"./terminal"</span>)(OS.Process.exec(commands.cat))</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">
+</code></pre>
 </div>
         </li>
         
