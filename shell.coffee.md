@@ -25,7 +25,8 @@ Look up executable.
       exec = (command) ->
         [command, args...] = command.split /\s/
 
-        executable = executables[command]
+        unless executable = executables[command]
+          err.IN "No command '#{command}' found"
 
         try
           proc = Process.exec(executable, args)
