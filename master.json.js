@@ -20,7 +20,7 @@ window["STRd6/crash:master"]({
     },
     "main.coffee.md": {
       "path": "main.coffee.md",
-      "content": "We need to bootstrap our whole system.\n\nCommands for testing\n\n    commands = {}\n\n    [\"echo\", \"cat\"].forEach (name) ->\n      commands[name] = PACKAGE.distribution[name].content\n\n    OS = require \"./os\"\n\n    # TODO: Hook up a real shell\n    exec = (command) ->\n      [command, args...] = command.split /\\s/\n\n      exe = commands[command]\n      Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN)\n\nPipe input to output among running apps.\n\nList running processes.\n\nKill processes.\n\nExplore a filesystem.\n\n    require(\"./terminal\")(OS.Process.exec(commands.cat))\n",
+      "content": "We need to bootstrap our whole system.\n\nCommands for testing\n\n    commands = {}\n\n    [\"echo\", \"cat\"].forEach (name) ->\n      commands[name] = PACKAGE.distribution[name].content\n\n    OS = require \"./os\"\n\nPipe input to output among running apps.\n\nList running processes.\n\nKill processes.\n\nExplore a filesystem.\n\n    # TODO: Run the shell process rather than cat\n    require(\"./terminal\")(OS.Process.exec(commands.cat))\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -75,12 +75,17 @@ window["STRd6/crash:master"]({
     },
     "templates/terminal.haml": {
       "path": "templates/terminal.haml",
-      "content": "%form.terminal(@submit)\n  %pre\n  %input\n",
+      "content": "%form.terminal(@submit)\n  %pre\n  %input\n  .prompt crash>\n",
       "mode": "100644"
     },
     "style/terminal.styl": {
       "path": "style/terminal.styl",
-      "content": "html, body, .terminal, pre\n  height: 100%\n\n.terminal\n  position: relative\n\npre\n  background-color: black\n  box-sizing: border-box\n  color: #080\n  padding-bottom: 20px\n\ninput\n  background-color: black\n  box-sizing: border-box\n  border: none\n  color: #080\n  margin: 0\n  position: absolute\n  bottom: 0\n  width: 100%\n\nbody, pre, input\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace\n  font-size: 18px\n  margin: 0\n",
+      "content": "html, body, .terminal, pre\n  height: 100%\n\n.terminal\n  position: relative\n\npre\n  background-color: black\n  box-sizing: border-box\n  padding-bottom: 20px\n\ninput\n  background-color: black\n  box-sizing: border-box\n  border: none\n  bottom: 0\n  padding: 0 0 0 60px\n  position: absolute\n  width: 100%\n\n.prompt\n  bottom: 0\n  left: 0\n  position: absolute\n\nbody, pre, input\n  color: #080\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace\n  font-size: 18px\n  margin: 0\n",
+      "mode": "100644"
+    },
+    "shell.coffee.md": {
+      "path": "shell.coffee.md",
+      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    OS = require \"./os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\n    module.exports = ->\n      exec = (command) ->\n        [command, args...] = command.split /\\s/\n\n        exe = commands[command]\n        Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN)\n",
       "mode": "100644"
     }
   },
@@ -97,7 +102,7 @@ window["STRd6/crash:master"]({
     },
     "main": {
       "path": "main",
-      "content": "(function() {\n  var OS, commands, exec,\n    __slice = [].slice;\n\n  commands = {};\n\n  [\"echo\", \"cat\"].forEach(function(name) {\n    return commands[name] = PACKAGE.distribution[name].content;\n  });\n\n  OS = require(\"./os\");\n\n  exec = function(command) {\n    var args, exe, _ref;\n    _ref = command.split(/\\s/), command = _ref[0], args = 2 <= _ref.length ? __slice.call(_ref, 1) : [];\n    exe = commands[command];\n    return Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN);\n  };\n\n  require(\"./terminal\")(OS.Process.exec(commands.cat));\n\n}).call(this);\n",
+      "content": "(function() {\n  var OS, commands;\n\n  commands = {};\n\n  [\"echo\", \"cat\"].forEach(function(name) {\n    return commands[name] = PACKAGE.distribution[name].content;\n  });\n\n  OS = require(\"./os\");\n\n  require(\"./terminal\")(OS.Process.exec(commands.cat));\n\n}).call(this);\n",
       "type": "blob"
     },
     "pixie": {
@@ -147,12 +152,17 @@ window["STRd6/crash:master"]({
     },
     "templates/terminal": {
       "path": "templates/terminal",
-      "content": "module.exports = (function(data) {\n  return (function() {\n    var __runtime;\n    __runtime = require(\"/lib/hamlet-runtime\")(this);\n    __runtime.push(document.createDocumentFragment());\n    __runtime.push(document.createElement(\"form\"));\n    __runtime.classes(\"terminal\");\n    __runtime.attribute(\"submit\", this.submit);\n    __runtime.push(document.createElement(\"pre\"));\n    __runtime.pop();\n    __runtime.push(document.createElement(\"input\"));\n    __runtime.pop();\n    __runtime.pop();\n    return __runtime.pop();\n  }).call(data);\n});\n",
+      "content": "module.exports = (function(data) {\n  return (function() {\n    var __runtime;\n    __runtime = require(\"/lib/hamlet-runtime\")(this);\n    __runtime.push(document.createDocumentFragment());\n    __runtime.push(document.createElement(\"form\"));\n    __runtime.classes(\"terminal\");\n    __runtime.attribute(\"submit\", this.submit);\n    __runtime.push(document.createElement(\"pre\"));\n    __runtime.pop();\n    __runtime.push(document.createElement(\"input\"));\n    __runtime.pop();\n    __runtime.push(document.createElement(\"div\"));\n    __runtime.classes(\"prompt\");\n    __runtime.text(\"crash>\\n\");\n    __runtime.pop();\n    __runtime.pop();\n    return __runtime.pop();\n  }).call(data);\n});\n",
       "type": "blob"
     },
     "style/terminal": {
       "path": "style/terminal",
-      "content": "module.exports = \"html,\\nbody,\\n.terminal,\\npre {\\n  height: 100%;\\n}\\n\\n.terminal {\\n  position: relative;\\n}\\n\\npre {\\n  background-color: black;\\n  color: #080;\\n  padding-bottom: 20px;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\ninput {\\n  background-color: black;\\n  border: none;\\n  color: #080;\\n  margin: 0;\\n  position: absolute;\\n  bottom: 0;\\n  width: 100%;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\nbody,\\npre,\\ninput {\\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace;\\n  font-size: 18px;\\n  margin: 0;\\n}\";",
+      "content": "module.exports = \"html,\\nbody,\\n.terminal,\\npre {\\n  height: 100%;\\n}\\n\\n.terminal {\\n  position: relative;\\n}\\n\\npre {\\n  background-color: black;\\n  padding-bottom: 20px;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\ninput {\\n  background-color: black;\\n  border: none;\\n  bottom: 0;\\n  padding: 0 0 0 60px;\\n  position: absolute;\\n  width: 100%;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\n.prompt {\\n  bottom: 0;\\n  left: 0;\\n  position: absolute;\\n}\\n\\nbody,\\npre,\\ninput {\\n  color: #080;\\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace;\\n  font-size: 18px;\\n  margin: 0;\\n}\";",
+      "type": "blob"
+    },
+    "shell": {
+      "path": "shell",
+      "content": "(function() {\n  var OS,\n    __slice = [].slice;\n\n  OS = require(\"./os\");\n\n  module.exports = function() {\n    var exec;\n    return exec = function(command) {\n      var args, exe, _ref;\n      _ref = command.split(/\\s/), command = _ref[0], args = 2 <= _ref.length ? __slice.call(_ref, 1) : [];\n      exe = commands[command];\n      return Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN);\n    };\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "lib/hamlet-runtime": {
