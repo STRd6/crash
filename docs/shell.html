@@ -64,7 +64,8 @@ module.<span class="function"><span class="title">exports</span></span> = -&gt;
   <span class="function"><span class="title">exec</span></span> = (command) -&gt;
     [command, args...] = command.split <span class="regexp">/\s/</span>
 
-    executable = executables[command]
+    <span class="keyword">unless</span> executable = executables[command]
+      err.IN <span class="string">"No command '<span class="subst">#{command}</span>' found"</span>
 
     <span class="keyword">try</span>
       proc = Process.exec(executable, args)
