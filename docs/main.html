@@ -27,7 +27,7 @@
 [<span class="string">"echo"</span>, <span class="string">"cat"</span>].forEach (name) -&gt;
   commands[name] = PACKAGE.distribution[name].content
 
-OS = require <span class="string">"./os"</span></code></pre>
+Shell = require <span class="string">"./shell"</span></code></pre>
 </div>
         </li>
         
@@ -43,8 +43,7 @@ OS = require <span class="string">"./os"</span></code></pre>
 <p>Explore a filesystem.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Run the shell process rather than cat</span>
-require(<span class="string">"./terminal"</span>)(OS.Process.exec(commands.cat))</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">require(<span class="string">"./terminal"</span>)(Shell())</code></pre>
 </div>
         </li>
         

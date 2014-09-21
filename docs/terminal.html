@@ -39,7 +39,7 @@
 
 template = require <span class="string">"./templates/terminal"</span>
 
-module.<span class="function"><span class="title">exports</span></span> = ({STDIN, STDOUT}) -&gt;
+module.<span class="function"><span class="title">exports</span></span> = ({STDIN, STDOUT, STDERR}) -&gt;
   model =
     submit: (event) -&gt;
       event.preventDefault()
@@ -52,7 +52,14 @@ module.<span class="function"><span class="title">exports</span></span> = ({STDI
       input.value = <span class="string">""</span>
 
   STDOUT (data) -&gt;
-    pre.textContent += data + <span class="string">"\n"</span>
+    pre.appendChild document.createTextNode(data + <span class="string">"\n"</span>)
+
+  STDERR (data) -&gt;
+    errSpan = document.createElement(<span class="string">"span"</span>)
+    errSpan.textContent = data + <span class="string">"\n"</span>
+    errSpan.className = <span class="string">"error"</span>
+
+    pre.appendChild errSpan
 
   applyStylesheet(require(<span class="string">"./style/terminal"</span>), <span class="string">"terminal"</span>)
 

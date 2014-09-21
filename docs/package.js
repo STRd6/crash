@@ -186,7 +186,7 @@
     },
     "main.coffee.md": {
       "path": "main.coffee.md",
-      "content": "We need to bootstrap our whole system.\n\nCommands for testing\n\n    commands = {}\n\n    [\"echo\", \"cat\"].forEach (name) ->\n      commands[name] = PACKAGE.distribution[name].content\n\n    OS = require \"./os\"\n\nPipe input to output among running apps.\n\nList running processes.\n\nKill processes.\n\nExplore a filesystem.\n\n    # TODO: Run the shell process rather than cat\n    require(\"./terminal\")(OS.Process.exec(commands.cat))\n",
+      "content": "We need to bootstrap our whole system.\n\nCommands for testing\n\n    commands = {}\n\n    [\"echo\", \"cat\"].forEach (name) ->\n      commands[name] = PACKAGE.distribution[name].content\n\n    Shell = require \"./shell\"\n\nPipe input to output among running apps.\n\nList running processes.\n\nKill processes.\n\nExplore a filesystem.\n\n    require(\"./terminal\")(Shell())\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -221,7 +221,7 @@
     },
     "pipe.coffee.md": {
       "path": "pipe.coffee.md",
-      "content": "Pipe\n====\n\nConnect processes!\n\n    module.exports = \n      connect: (procs...) ->\n        procs.forEach (left, index) ->\n          right = procs[index + 1]\n\n          if right\n            left.STDOUT right.STDIN\n\n        STDOUT: procs[procs.length-1].STDOUT\n        STDIN: procs[0].STDIN\n",
+      "content": "Pipe\n====\n\nConnect processes!\n\n    # TODO: Figure out how to get a decent buffer dealy\n    # TODO: Maybe keep a little buffer to collect data before a handler is \n    # attached\n    Buffer = ->\n      outFn = null\n\n      IN: (data) ->\n        outFn?(data)\n\n      OUT:\n        (handler) ->\n          outFn = handler\n\n    module.exports = \n      Buffer: Buffer\n\n      connect: (procs...) ->\n        procs.forEach (left, index) ->\n          right = procs[index + 1]\n\n          if right\n            left.STDOUT right.STDIN\n\n        STDOUT: procs[procs.length-1].STDOUT\n        STDIN: procs[0].STDIN\n",
       "mode": "100644"
     },
     "test/os.coffee": {
@@ -236,7 +236,7 @@
     },
     "terminal.coffee.md": {
       "path": "terminal.coffee.md",
-      "content": "Terminal\n========\n\nExecute input and display output.\n\n    {applyStylesheet} = require \"util\"\n\n    template = require \"./templates/terminal\"\n\n    module.exports = ({STDIN, STDOUT}) ->\n      model =\n        submit: (event) ->\n          event.preventDefault()\n\n          command = input.value\n          input.value = \"\"\n\n          STDIN(command)\n\n          input.value = \"\"\n\n      STDOUT (data) ->\n        pre.textContent += data + \"\\n\"\n\n      applyStylesheet(require(\"./style/terminal\"), \"terminal\")\n\n      element = template(model)\n\n      document.body.appendChild element\n\n      input = element.getElementsByTagName(\"input\")[0]\n      pre = element.getElementsByTagName(\"pre\")[0]\n\n      return element",
+      "content": "Terminal\n========\n\nExecute input and display output.\n\n    {applyStylesheet} = require \"util\"\n\n    template = require \"./templates/terminal\"\n\n    module.exports = ({STDIN, STDOUT, STDERR}) ->\n      model =\n        submit: (event) ->\n          event.preventDefault()\n\n          command = input.value\n          input.value = \"\"\n\n          STDIN(command)\n\n          input.value = \"\"\n\n      STDOUT (data) ->\n        pre.appendChild document.createTextNode(data + \"\\n\")\n      \n      STDERR (data) ->\n        errSpan = document.createElement(\"span\")\n        errSpan.textContent = data + \"\\n\"\n        errSpan.className = \"error\"\n\n        pre.appendChild errSpan\n\n      applyStylesheet(require(\"./style/terminal\"), \"terminal\")\n\n      element = template(model)\n\n      document.body.appendChild element\n\n      input = element.getElementsByTagName(\"input\")[0]\n      pre = element.getElementsByTagName(\"pre\")[0]\n\n      return element",
       "mode": "100644"
     },
     "templates/terminal.haml": {
@@ -246,12 +246,12 @@
     },
     "style/terminal.styl": {
       "path": "style/terminal.styl",
-      "content": "html, body, .terminal, pre\n  height: 100%\n\n.terminal\n  position: relative\n\npre\n  background-color: black\n  box-sizing: border-box\n  padding-bottom: 20px\n\ninput\n  background-color: black\n  box-sizing: border-box\n  border: none\n  bottom: 0\n  padding: 0 0 0 60px\n  position: absolute\n  width: 100%\n\n.prompt\n  bottom: 0\n  left: 0\n  position: absolute\n\nbody, pre, input\n  color: #080\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace\n  font-size: 18px\n  margin: 0\n",
+      "content": "html, body, .terminal, pre\n  height: 100%\n\n.terminal\n  position: relative\n\npre\n  background-color: black\n  box-sizing: border-box\n  padding-bottom: 20px\n\ninput\n  background-color: black\n  box-sizing: border-box\n  border: none\n  bottom: 0\n  padding: 0 0 0 60px\n  position: absolute\n  width: 100%\n\n.prompt\n  bottom: 0\n  left: 0\n  position: absolute\n\nbody, pre, input\n  color: #080\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace\n  font-size: 18px\n  margin: 0\n\n.error\n  color: red\n",
       "mode": "100644"
     },
     "shell.coffee.md": {
       "path": "shell.coffee.md",
-      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    OS = require \"os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\n    exec = (command) ->\n      \n\n    module.exports = ->\n      exec = (command) ->\n        [command, args...] = command.split /\\s/\n\n        exe = commands[command]\n        Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN)\n",
+      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    {Pipe, Process} = OS = require \"./os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\nLook up executable.\n\n    executables = {}\n\n    [\"cat\", \"echo\"].forEach (name) ->\n      executables[name] = PACKAGE.distribution[name].content\n\n    module.exports = ->\n      std = Pipe.Buffer()\n      err = Pipe.Buffer()\n\n      exec = (command) ->\n        [command, args...] = command.split /\\s/\n\n        executable = executables[command]\n\n        try\n          proc = Process.exec(executable, args)\n\n          proc.STDOUT std.IN\n          proc.STDERR err.IN\n        catch e\n          err.IN e.message\n\n      STDIN: exec\n      STDOUT: std.OUT\n      STDERR: err.OUT\n",
       "mode": "100644"
     }
   },
@@ -268,7 +268,7 @@
     },
     "main": {
       "path": "main",
-      "content": "(function() {\n  var OS, commands;\n\n  commands = {};\n\n  [\"echo\", \"cat\"].forEach(function(name) {\n    return commands[name] = PACKAGE.distribution[name].content;\n  });\n\n  OS = require(\"./os\");\n\n  require(\"./terminal\")(OS.Process.exec(commands.cat));\n\n}).call(this);\n",
+      "content": "(function() {\n  var Shell, commands;\n\n  commands = {};\n\n  [\"echo\", \"cat\"].forEach(function(name) {\n    return commands[name] = PACKAGE.distribution[name].content;\n  });\n\n  Shell = require(\"./shell\");\n\n  require(\"./terminal\")(Shell());\n\n}).call(this);\n",
       "type": "blob"
     },
     "pixie": {
@@ -298,7 +298,7 @@
     },
     "pipe": {
       "path": "pipe",
-      "content": "(function() {\n  var __slice = [].slice;\n\n  module.exports = {\n    connect: function() {\n      var procs;\n      procs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n      procs.forEach(function(left, index) {\n        var right;\n        right = procs[index + 1];\n        if (right) {\n          return left.STDOUT(right.STDIN);\n        }\n      });\n      return {\n        STDOUT: procs[procs.length - 1].STDOUT,\n        STDIN: procs[0].STDIN\n      };\n    }\n  };\n\n}).call(this);\n",
+      "content": "(function() {\n  var Buffer,\n    __slice = [].slice;\n\n  Buffer = function() {\n    var outFn;\n    outFn = null;\n    return {\n      IN: function(data) {\n        return typeof outFn === \"function\" ? outFn(data) : void 0;\n      },\n      OUT: function(handler) {\n        return outFn = handler;\n      }\n    };\n  };\n\n  module.exports = {\n    Buffer: Buffer,\n    connect: function() {\n      var procs;\n      procs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n      procs.forEach(function(left, index) {\n        var right;\n        right = procs[index + 1];\n        if (right) {\n          return left.STDOUT(right.STDIN);\n        }\n      });\n      return {\n        STDOUT: procs[procs.length - 1].STDOUT,\n        STDIN: procs[0].STDIN\n      };\n    }\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "test/os": {
@@ -313,7 +313,7 @@
     },
     "terminal": {
       "path": "terminal",
-      "content": "(function() {\n  var applyStylesheet, template;\n\n  applyStylesheet = require(\"util\").applyStylesheet;\n\n  template = require(\"./templates/terminal\");\n\n  module.exports = function(_arg) {\n    var STDIN, STDOUT, element, input, model, pre;\n    STDIN = _arg.STDIN, STDOUT = _arg.STDOUT;\n    model = {\n      submit: function(event) {\n        var command;\n        event.preventDefault();\n        command = input.value;\n        input.value = \"\";\n        STDIN(command);\n        return input.value = \"\";\n      }\n    };\n    STDOUT(function(data) {\n      return pre.textContent += data + \"\\n\";\n    });\n    applyStylesheet(require(\"./style/terminal\"), \"terminal\");\n    element = template(model);\n    document.body.appendChild(element);\n    input = element.getElementsByTagName(\"input\")[0];\n    pre = element.getElementsByTagName(\"pre\")[0];\n    return element;\n  };\n\n}).call(this);\n",
+      "content": "(function() {\n  var applyStylesheet, template;\n\n  applyStylesheet = require(\"util\").applyStylesheet;\n\n  template = require(\"./templates/terminal\");\n\n  module.exports = function(_arg) {\n    var STDERR, STDIN, STDOUT, element, input, model, pre;\n    STDIN = _arg.STDIN, STDOUT = _arg.STDOUT, STDERR = _arg.STDERR;\n    model = {\n      submit: function(event) {\n        var command;\n        event.preventDefault();\n        command = input.value;\n        input.value = \"\";\n        STDIN(command);\n        return input.value = \"\";\n      }\n    };\n    STDOUT(function(data) {\n      return pre.appendChild(document.createTextNode(data + \"\\n\"));\n    });\n    STDERR(function(data) {\n      var errSpan;\n      errSpan = document.createElement(\"span\");\n      errSpan.textContent = data + \"\\n\";\n      errSpan.className = \"error\";\n      return pre.appendChild(errSpan);\n    });\n    applyStylesheet(require(\"./style/terminal\"), \"terminal\");\n    element = template(model);\n    document.body.appendChild(element);\n    input = element.getElementsByTagName(\"input\")[0];\n    pre = element.getElementsByTagName(\"pre\")[0];\n    return element;\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "templates/terminal": {
@@ -323,12 +323,12 @@
     },
     "style/terminal": {
       "path": "style/terminal",
-      "content": "module.exports = \"html,\\nbody,\\n.terminal,\\npre {\\n  height: 100%;\\n}\\n\\n.terminal {\\n  position: relative;\\n}\\n\\npre {\\n  background-color: black;\\n  padding-bottom: 20px;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\ninput {\\n  background-color: black;\\n  border: none;\\n  bottom: 0;\\n  padding: 0 0 0 60px;\\n  position: absolute;\\n  width: 100%;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\n.prompt {\\n  bottom: 0;\\n  left: 0;\\n  position: absolute;\\n}\\n\\nbody,\\npre,\\ninput {\\n  color: #080;\\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace;\\n  font-size: 18px;\\n  margin: 0;\\n}\";",
+      "content": "module.exports = \"html,\\nbody,\\n.terminal,\\npre {\\n  height: 100%;\\n}\\n\\n.terminal {\\n  position: relative;\\n}\\n\\npre {\\n  background-color: black;\\n  padding-bottom: 20px;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\ninput {\\n  background-color: black;\\n  border: none;\\n  bottom: 0;\\n  padding: 0 0 0 60px;\\n  position: absolute;\\n  width: 100%;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\n.prompt {\\n  bottom: 0;\\n  left: 0;\\n  position: absolute;\\n}\\n\\nbody,\\npre,\\ninput {\\n  color: #080;\\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace;\\n  font-size: 18px;\\n  margin: 0;\\n}\\n\\n.error {\\n  color: red;\\n}\";",
       "type": "blob"
     },
     "shell": {
       "path": "shell",
-      "content": "(function() {\n  var OS, exec,\n    __slice = [].slice;\n\n  OS = require(\"os\");\n\n  exec = function(command) {};\n\n  module.exports = function() {\n    return exec = function(command) {\n      var args, exe, _ref;\n      _ref = command.split(/\\s/), command = _ref[0], args = 2 <= _ref.length ? __slice.call(_ref, 1) : [];\n      exe = commands[command];\n      return Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN);\n    };\n  };\n\n}).call(this);\n",
+      "content": "(function() {\n  var OS, Pipe, Process, executables, _ref,\n    __slice = [].slice;\n\n  _ref = OS = require(\"./os\"), Pipe = _ref.Pipe, Process = _ref.Process;\n\n  executables = {};\n\n  [\"cat\", \"echo\"].forEach(function(name) {\n    return executables[name] = PACKAGE.distribution[name].content;\n  });\n\n  module.exports = function() {\n    var err, exec, std;\n    std = Pipe.Buffer();\n    err = Pipe.Buffer();\n    exec = function(command) {\n      var args, e, executable, proc, _ref1;\n      _ref1 = command.split(/\\s/), command = _ref1[0], args = 2 <= _ref1.length ? __slice.call(_ref1, 1) : [];\n      executable = executables[command];\n      try {\n        proc = Process.exec(executable, args);\n        proc.STDOUT(std.IN);\n        return proc.STDERR(err.IN);\n      } catch (_error) {\n        e = _error;\n        return err.IN(e.message);\n      }\n    };\n    return {\n      STDIN: exec,\n      STDOUT: std.OUT,\n      STDERR: err.OUT\n    };\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "lib/hamlet-runtime": {

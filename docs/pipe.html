@@ -35,7 +35,22 @@
               <p>Connect processes!</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">module.exports = 
+            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Figure out how to get a decent buffer dealy</span>
+<span class="comment"># TODO: Maybe keep a little buffer to collect data before a handler is </span>
+<span class="comment"># attached</span>
+<span class="function"><span class="title">Buffer</span></span> = -&gt;
+  outFn = <span class="literal">null</span>
+
+  IN: (data) -&gt;
+    outFn?(data)
+
+  OUT:
+    (handler) -&gt;
+      outFn = handler
+
+module.exports = 
+  Buffer: Buffer
+
   connect: (procs...) -&gt;
     procs.forEach (left, index) -&gt;
       right = procs[index + <span class="number">1</span>]

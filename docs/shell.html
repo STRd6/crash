@@ -38,7 +38,7 @@ the system library instead of os which will wrap the os functions with system
 calls.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">OS = require <span class="string">"os"</span></code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">{Pipe, Process} = OS = require <span class="string">"./os"</span></code></pre>
 </div>
         </li>
         
@@ -49,17 +49,34 @@ calls.</p>
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
               <p>Need to set up <code>ENV</code>, <code>PATH</code>, etc...</p>
+<p>Look up executable.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">exec</span></span> = (command) -&gt;
+            <div class="content"><pre><code class="lang-coffeescript">executables = {}
 
+[<span class="string">"cat"</span>, <span class="string">"echo"</span>].forEach (name) -&gt;
+  executables[name] = PACKAGE.distribution[name].content
 
 module.<span class="function"><span class="title">exports</span></span> = -&gt;
+  std = Pipe.Buffer()
+  err = Pipe.Buffer()
+
   <span class="function"><span class="title">exec</span></span> = (command) -&gt;
     [command, args...] = command.split <span class="regexp">/\s/</span>
 
-    exe = commands[command]
-    Function(<span class="string">"$PROGRAM_NAME"</span>, <span class="string">"ARGV"</span>, <span class="string">"STDOUT"</span>, <span class="string">"STDIN"</span>, exe)(command, args, STDOUT, STDIN)</code></pre>
+    executable = executables[command]
+
+    <span class="keyword">try</span>
+      proc = Process.exec(executable, args)
+
+      proc.STDOUT std.IN
+      proc.STDERR err.IN
+    <span class="keyword">catch</span> e
+      err.IN e.message
+
+  STDIN: exec
+  STDOUT: std.OUT
+  STDERR: err.OUT</code></pre>
 </div>
         </li>
         
