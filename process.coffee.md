@@ -11,7 +11,7 @@ Create an run a process. (A fancily wrapped web worker).
 
         # Set up program environment with a wrapper
         # that provides STDOUT, ARGV, and anything else this "OS" provides
-  
+
         pkg =
           entryPoint: "main"
           distribution:
@@ -19,6 +19,7 @@ Create an run a process. (A fancily wrapped web worker).
               content: programCode
           dependencies:
             require: PACKAGE.dependencies.require
+            os: PACKAGE.dependencies.os_client
 
         resourceUrl = URL.createObjectURL(new Blob([
           "PACKAGE=#{JSON.stringify(pkg)}\n", # Set up PACKAGE
@@ -38,6 +39,9 @@ Create an run a process. (A fancily wrapped web worker).
             when "STDERR"
               errHandlers.forEach (handler) ->
                 handler message
+            when "SYS"
+              {method, args} = message
+              systemCall[method](args...)
             else
               console.log "Unknown type"
   

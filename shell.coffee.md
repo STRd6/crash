@@ -7,9 +7,12 @@ TODO: This should be a 'workerspace' program. Ideally we'll be able to require
 the system library instead of os which will wrap the os functions with system 
 calls.
 
-    OS = require "./os"
+    OS = require "os"
 
 Need to set up `ENV`, `PATH`, etc...
+
+    exec = (command) ->
+      
 
     module.exports = ->
       exec = (command) ->
