@@ -26,7 +26,7 @@ window["STRd6/crash:master"]({
     },
     "pixie.cson": {
       "path": "pixie.cson",
-      "content": "version: \"0.1.0\"\nremoteDependencies: [\n  \"https://code.jquery.com/jquery-1.11.0.min.js\"\n]\ndependencies:\n  require: \"distri/require:v0.4.3-pre.0\"\n  util: \"distri/util:v0.1.0\"\n",
+      "content": "version: \"0.1.0\"\nremoteDependencies: [\n  \"https://code.jquery.com/jquery-1.11.0.min.js\"\n]\ndependencies:\n  os_client: \"STRd6/os_client:v0.0.0\"\n  require: \"distri/require:v0.4.3-pre.0\"\n  util: \"distri/util:v0.1.0\"\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -38,7 +38,7 @@ window["STRd6/crash:master"]({
     },
     "process.coffee.md": {
       "path": "process.coffee.md",
-      "content": "Process\n=======\n\nCreate an run a process. (A fancily wrapped web worker).\n\n    # TODO: Is there a better way to handle system bootstrapping?\n    boot = PACKAGE.distribution.proc_setup.content\n\n    module.exports = \n      exec: (programCode, args=[]) ->\n\n        # Set up program environment with a wrapper\n        # that provides STDOUT, ARGV, and anything else this \"OS\" provides\n  \n        pkg =\n          entryPoint: \"main\"\n          distribution:\n            main:\n              content: programCode\n          dependencies:\n            require: PACKAGE.dependencies.require\n\n        resourceUrl = URL.createObjectURL(new Blob([\n          \"PACKAGE=#{JSON.stringify(pkg)}\\n\", # Set up PACKAGE\n          \"ARGV=#{JSON.stringify(args)};\\n\", # Set up ARGV\n          boot\n        ], type: \"application/javascript\"))\n  \n        worker = new Worker(resourceUrl)\n  \n        worker.onmessage = ({data}) ->\n          {type, message} = data\n  \n          switch type\n            when \"STDOUT\"\n              handlers.forEach (handler) ->\n                handler message\n            when \"STDERR\"\n              errHandlers.forEach (handler) ->\n                handler message\n            else\n              console.log \"Unknown type\"\n  \n        worker.onerror = (e) ->\n          console.log e\n          errHandlers.forEach (handler) ->\n            handler e\n  \n        # TODO: should we only allow one handler per channel?\n        handlers = []\n        errHandlers = []\n  \n        STDIN: (data) ->\n          # Pass data to process' STDIN\n          worker.postMessage\n            type: \"STDIN\"\n            message: data\n        STDERR: (handler) ->\n          errHandlers.push handler\n        STDOUT: (handler) ->\n          handlers.push handler\n",
+      "content": "Process\n=======\n\nCreate an run a process. (A fancily wrapped web worker).\n\n    # TODO: Is there a better way to handle system bootstrapping?\n    boot = PACKAGE.distribution.proc_setup.content\n\n    module.exports = \n      exec: (programCode, args=[]) ->\n\n        # Set up program environment with a wrapper\n        # that provides STDOUT, ARGV, and anything else this \"OS\" provides\n\n        pkg =\n          entryPoint: \"main\"\n          distribution:\n            main:\n              content: programCode\n          dependencies:\n            require: PACKAGE.dependencies.require\n            os: PACKAGE.dependencies.os_client\n\n        resourceUrl = URL.createObjectURL(new Blob([\n          \"PACKAGE=#{JSON.stringify(pkg)}\\n\", # Set up PACKAGE\n          \"ARGV=#{JSON.stringify(args)};\\n\", # Set up ARGV\n          boot\n        ], type: \"application/javascript\"))\n  \n        worker = new Worker(resourceUrl)\n  \n        worker.onmessage = ({data}) ->\n          {type, message} = data\n  \n          switch type\n            when \"STDOUT\"\n              handlers.forEach (handler) ->\n                handler message\n            when \"STDERR\"\n              errHandlers.forEach (handler) ->\n                handler message\n            when \"SYS\"\n              {method, args} = message\n              systemCall[method](args...)\n            else\n              console.log \"Unknown type\"\n  \n        worker.onerror = (e) ->\n          console.log e\n          errHandlers.forEach (handler) ->\n            handler e\n  \n        # TODO: should we only allow one handler per channel?\n        handlers = []\n        errHandlers = []\n  \n        STDIN: (data) ->\n          # Pass data to process' STDIN\n          worker.postMessage\n            type: \"STDIN\"\n            message: data\n        STDERR: (handler) ->\n          errHandlers.push handler\n        STDOUT: (handler) ->\n          handlers.push handler\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -65,7 +65,7 @@ window["STRd6/crash:master"]({
     },
     "yes.coffee.md": {
       "path": "yes.coffee.md",
-      "content": "",
+      "content": "yes\n===\n\nPrint y or the args out repeatedly.\n\n    token = ARGS[0] or \"y\"\n\n    setInterval ->\n      STDOUT(token)\n    , 0\n",
       "mode": "100644"
     },
     "terminal.coffee.md": {
@@ -85,7 +85,7 @@ window["STRd6/crash:master"]({
     },
     "shell.coffee.md": {
       "path": "shell.coffee.md",
-      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    OS = require \"./os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\n    module.exports = ->\n      exec = (command) ->\n        [command, args...] = command.split /\\s/\n\n        exe = commands[command]\n        Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN)\n",
+      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    OS = require \"os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\n    exec = (command) ->\n      \n\n    module.exports = ->\n      exec = (command) ->\n        [command, args...] = command.split /\\s/\n\n        exe = commands[command]\n        Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN)\n",
       "mode": "100644"
     }
   },
@@ -107,7 +107,7 @@ window["STRd6/crash:master"]({
     },
     "pixie": {
       "path": "pixie",
-      "content": "module.exports = {\"version\":\"0.1.0\",\"remoteDependencies\":[\"https://code.jquery.com/jquery-1.11.0.min.js\"],\"dependencies\":{\"require\":\"distri/require:v0.4.3-pre.0\",\"util\":\"distri/util:v0.1.0\"}};",
+      "content": "module.exports = {\"version\":\"0.1.0\",\"remoteDependencies\":[\"https://code.jquery.com/jquery-1.11.0.min.js\"],\"dependencies\":{\"os_client\":\"STRd6/os_client:v0.0.0\",\"require\":\"distri/require:v0.4.3-pre.0\",\"util\":\"distri/util:v0.1.0\"}};",
       "type": "blob"
     },
     "proc_setup": {
@@ -117,7 +117,7 @@ window["STRd6/crash:master"]({
     },
     "process": {
       "path": "process",
-      "content": "(function() {\n  var boot;\n\n  boot = PACKAGE.distribution.proc_setup.content;\n\n  module.exports = {\n    exec: function(programCode, args) {\n      var errHandlers, handlers, pkg, resourceUrl, worker;\n      if (args == null) {\n        args = [];\n      }\n      pkg = {\n        entryPoint: \"main\",\n        distribution: {\n          main: {\n            content: programCode\n          }\n        },\n        dependencies: {\n          require: PACKAGE.dependencies.require\n        }\n      };\n      resourceUrl = URL.createObjectURL(new Blob([\"PACKAGE=\" + (JSON.stringify(pkg)) + \"\\n\", \"ARGV=\" + (JSON.stringify(args)) + \";\\n\", boot], {\n        type: \"application/javascript\"\n      }));\n      worker = new Worker(resourceUrl);\n      worker.onmessage = function(_arg) {\n        var data, message, type;\n        data = _arg.data;\n        type = data.type, message = data.message;\n        switch (type) {\n          case \"STDOUT\":\n            return handlers.forEach(function(handler) {\n              return handler(message);\n            });\n          case \"STDERR\":\n            return errHandlers.forEach(function(handler) {\n              return handler(message);\n            });\n          default:\n            return console.log(\"Unknown type\");\n        }\n      };\n      worker.onerror = function(e) {\n        console.log(e);\n        return errHandlers.forEach(function(handler) {\n          return handler(e);\n        });\n      };\n      handlers = [];\n      errHandlers = [];\n      return {\n        STDIN: function(data) {\n          return worker.postMessage({\n            type: \"STDIN\",\n            message: data\n          });\n        },\n        STDERR: function(handler) {\n          return errHandlers.push(handler);\n        },\n        STDOUT: function(handler) {\n          return handlers.push(handler);\n        }\n      };\n    }\n  };\n\n}).call(this);\n",
+      "content": "(function() {\n  var boot;\n\n  boot = PACKAGE.distribution.proc_setup.content;\n\n  module.exports = {\n    exec: function(programCode, args) {\n      var errHandlers, handlers, pkg, resourceUrl, worker;\n      if (args == null) {\n        args = [];\n      }\n      pkg = {\n        entryPoint: \"main\",\n        distribution: {\n          main: {\n            content: programCode\n          }\n        },\n        dependencies: {\n          require: PACKAGE.dependencies.require,\n          os: PACKAGE.dependencies.os_client\n        }\n      };\n      resourceUrl = URL.createObjectURL(new Blob([\"PACKAGE=\" + (JSON.stringify(pkg)) + \"\\n\", \"ARGV=\" + (JSON.stringify(args)) + \";\\n\", boot], {\n        type: \"application/javascript\"\n      }));\n      worker = new Worker(resourceUrl);\n      worker.onmessage = function(_arg) {\n        var data, message, method, type;\n        data = _arg.data;\n        type = data.type, message = data.message;\n        switch (type) {\n          case \"STDOUT\":\n            return handlers.forEach(function(handler) {\n              return handler(message);\n            });\n          case \"STDERR\":\n            return errHandlers.forEach(function(handler) {\n              return handler(message);\n            });\n          case \"SYS\":\n            method = message.method, args = message.args;\n            return systemCall[method].apply(systemCall, args);\n          default:\n            return console.log(\"Unknown type\");\n        }\n      };\n      worker.onerror = function(e) {\n        console.log(e);\n        return errHandlers.forEach(function(handler) {\n          return handler(e);\n        });\n      };\n      handlers = [];\n      errHandlers = [];\n      return {\n        STDIN: function(data) {\n          return worker.postMessage({\n            type: \"STDIN\",\n            message: data\n          });\n        },\n        STDERR: function(handler) {\n          return errHandlers.push(handler);\n        },\n        STDOUT: function(handler) {\n          return handlers.push(handler);\n        }\n      };\n    }\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "test/process": {
@@ -142,7 +142,7 @@ window["STRd6/crash:master"]({
     },
     "yes": {
       "path": "yes",
-      "content": "(function() {\n\n\n}).call(this);\n",
+      "content": "(function() {\n  var token;\n\n  token = ARGS[0] || \"y\";\n\n  setInterval(function() {\n    return STDOUT(token);\n  }, 0);\n\n}).call(this);\n",
       "type": "blob"
     },
     "terminal": {
@@ -162,7 +162,7 @@ window["STRd6/crash:master"]({
     },
     "shell": {
       "path": "shell",
-      "content": "(function() {\n  var OS,\n    __slice = [].slice;\n\n  OS = require(\"./os\");\n\n  module.exports = function() {\n    var exec;\n    return exec = function(command) {\n      var args, exe, _ref;\n      _ref = command.split(/\\s/), command = _ref[0], args = 2 <= _ref.length ? __slice.call(_ref, 1) : [];\n      exe = commands[command];\n      return Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN);\n    };\n  };\n\n}).call(this);\n",
+      "content": "(function() {\n  var OS, exec,\n    __slice = [].slice;\n\n  OS = require(\"os\");\n\n  exec = function(command) {};\n\n  module.exports = function() {\n    return exec = function(command) {\n      var args, exe, _ref;\n      _ref = command.split(/\\s/), command = _ref[0], args = 2 <= _ref.length ? __slice.call(_ref, 1) : [];\n      exe = commands[command];\n      return Function(\"$PROGRAM_NAME\", \"ARGV\", \"STDOUT\", \"STDIN\", exe)(command, args, STDOUT, STDIN);\n    };\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "lib/hamlet-runtime": {
@@ -190,6 +190,84 @@ window["STRd6/crash:master"]({
     "publishBranch": "gh-pages"
   },
   "dependencies": {
+    "os_client": {
+      "source": {
+        "README.md": {
+          "path": "README.md",
+          "content": "os_client\n=========\n\nOS system call client API for use in web workers\n",
+          "mode": "100644",
+          "type": "blob"
+        },
+        "main.coffee.md": {
+          "path": "main.coffee.md",
+          "content": "OS Client\n=========\n\nClient system call wrapper for worker programs.\n\n    module.exports =\n      Process: require \"./process\"\n      File: require \"./file\"\n",
+          "mode": "100644"
+        },
+        "process.coffee.md": {
+          "path": "process.coffee.md",
+          "content": "Process\n=======\n\n    inputId = 0\n\n    messageBause = ->\n      \"P#{inputId += 1}\"\n\n    module.exports =\n      spawn: (path, args=[], env={}) ->\n        channelId = messageBause()\n        postMessage\n          type: \"SYS\"\n          message:\n            method: \"spawn\"\n            args: [\n              path\n              channelId\n              args\n              env\n            ]\n\n        outHandler = null\n\n        addEventListener \"message\", ({data}) ->\n          {channelId, type, message} = data\n\n          if cid is channelId\n            switch type\n              when \"STDOUT\"\n                outHandler?(data)\n              when \"STDERR\"\n                errHandler?(data)\n\n        STDIN: (data) ->\n          postMessage\n            cid: channelId\n            type: \"STDIN\"\n            message: data\n\n        STDOUT: (handler) ->\n          outHandler = handler\n        STDERR: (handler) ->\n          errHandler = handler\n",
+          "mode": "100644"
+        },
+        "pixie.cson": {
+          "path": "pixie.cson",
+          "content": "version: \"0.0.0\"\n",
+          "mode": "100644"
+        },
+        "file.coffee.md": {
+          "path": "file.coffee.md",
+          "content": "File\n====\n\nI guess this is where we try to be a file system?\n",
+          "mode": "100644"
+        },
+        "test/test.coffee": {
+          "path": "test/test.coffee",
+          "content": "OS = require \"../main\"\n\ndescribe \"OS Client\", ->\n  it \"should do some stuff maybe\", ->\n    assert OS\n",
+          "mode": "100644"
+        }
+      },
+      "distribution": {
+        "main": {
+          "path": "main",
+          "content": "(function() {\n  module.exports = {\n    Process: require(\"./process\"),\n    File: require(\"./file\")\n  };\n\n}).call(this);\n",
+          "type": "blob"
+        },
+        "process": {
+          "path": "process",
+          "content": "(function() {\n  var inputId, messageBause;\n\n  inputId = 0;\n\n  messageBause = function() {\n    return \"P\" + (inputId += 1);\n  };\n\n  module.exports = {\n    spawn: function(path, args, env) {\n      var channelId, outHandler;\n      if (args == null) {\n        args = [];\n      }\n      if (env == null) {\n        env = {};\n      }\n      channelId = messageBause();\n      postMessage({\n        type: \"SYS\",\n        message: {\n          method: \"spawn\",\n          args: [path, channelId, args, env]\n        }\n      });\n      outHandler = null;\n      addEventListener(\"message\", function(_arg) {\n        var data, message, type;\n        data = _arg.data;\n        channelId = data.channelId, type = data.type, message = data.message;\n        if (cid === channelId) {\n          switch (type) {\n            case \"STDOUT\":\n              return typeof outHandler === \"function\" ? outHandler(data) : void 0;\n            case \"STDERR\":\n              return typeof errHandler === \"function\" ? errHandler(data) : void 0;\n          }\n        }\n      });\n      return {\n        STDIN: function(data) {\n          return postMessage({\n            cid: channelId,\n            type: \"STDIN\",\n            message: data\n          });\n        },\n        STDOUT: function(handler) {\n          return outHandler = handler;\n        },\n        STDERR: function(handler) {\n          var errHandler;\n          return errHandler = handler;\n        }\n      };\n    }\n  };\n\n}).call(this);\n",
+          "type": "blob"
+        },
+        "pixie": {
+          "path": "pixie",
+          "content": "module.exports = {\"version\":\"0.0.0\"};",
+          "type": "blob"
+        },
+        "file": {
+          "path": "file",
+          "content": "(function() {\n\n\n}).call(this);\n",
+          "type": "blob"
+        },
+        "test/test": {
+          "path": "test/test",
+          "content": "(function() {\n  var OS;\n\n  OS = require(\"../main\");\n\n  describe(\"OS Client\", function() {\n    return it(\"should do some stuff maybe\", function() {\n      return assert(OS);\n    });\n  });\n\n}).call(this);\n",
+          "type": "blob"
+        }
+      },
+      "progenitor": {
+        "url": "http://www.danielx.net/editor/"
+      },
+      "version": "0.0.0",
+      "entryPoint": "main",
+      "repository": {
+        "branch": "v0.0.0",
+        "default_branch": "master",
+        "full_name": "STRd6/os_client",
+        "homepage": null,
+        "description": "OS system call client API for use in web workers",
+        "html_url": "https://github.com/STRd6/os_client",
+        "url": "https://api.github.com/repos/STRd6/os_client",
+        "publishBranch": "gh-pages"
+      },
+      "dependencies": {}
+    },
     "require": {
       "source": {
         "LICENSE": {

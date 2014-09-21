@@ -18,10 +18,28 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              
+              <h1 id="yes">yes</h1>
+
             </div>
             <div class="content"><pre><code class="lang-coffeescript">
 </code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>Print y or the args out repeatedly.</p>
+
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript">token = ARGS[<span class="number">0</span>] <span class="keyword">or</span> <span class="string">"y"</span>
+
+setInterval -&gt;
+  STDOUT(token)
+, <span class="number">0</span></code></pre>
 </div>
         </li>
         

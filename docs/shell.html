@@ -38,7 +38,7 @@ the system library instead of os which will wrap the os functions with system
 calls.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">OS = require <span class="string">"./os"</span></code></pre>
+            <div class="content"><pre><code class="lang-coffeescript">OS = require <span class="string">"os"</span></code></pre>
 </div>
         </li>
         
@@ -51,7 +51,10 @@ calls.</p>
               <p>Need to set up <code>ENV</code>, <code>PATH</code>, etc...</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">module.<span class="function"><span class="title">exports</span></span> = -&gt;
+            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">exec</span></span> = (command) -&gt;
+
+
+module.<span class="function"><span class="title">exports</span></span> = -&gt;
   <span class="function"><span class="title">exec</span></span> = (command) -&gt;
     [command, args...] = command.split <span class="regexp">/\s/</span>
 

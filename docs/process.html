@@ -51,6 +51,7 @@ module.exports =
           content: programCode
       dependencies:
         require: PACKAGE.dependencies.require
+        os: PACKAGE.dependencies.os_client
 
     resourceUrl = URL.createObjectURL(<span class="keyword">new</span> Blob([
       <span class="string">"PACKAGE=<span class="subst">#{JSON.stringify(pkg)}</span>\n"</span>, <span class="comment"># Set up PACKAGE</span>
@@ -70,6 +71,9 @@ module.exports =
         <span class="keyword">when</span> <span class="string">"STDERR"</span>
           errHandlers.forEach (handler) -&gt;
             handler message
+        <span class="keyword">when</span> <span class="string">"SYS"</span>
+          {method, args} = message
+          systemCall[method](args...)
         <span class="keyword">else</span>
           console.log <span class="string">"Unknown type"</span>
 
