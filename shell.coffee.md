@@ -7,16 +7,34 @@ TODO: This should be a 'workerspace' program. Ideally we'll be able to require
 the system library instead of os which will wrap the os functions with system 
 calls.
 
-    OS = require "os"
+    {Pipe, Process} = OS = require "./os"
 
 Need to set up `ENV`, `PATH`, etc...
 
-    exec = (command) ->
-      
+Look up executable.
+
+    executables = {}
+
+    ["cat", "echo"].forEach (name) ->
+      executables[name] = PACKAGE.distribution[name].content
 
     module.exports = ->
+      std = Pipe.Buffer()
+      err = Pipe.Buffer()
+
       exec = (command) ->
         [command, args...] = command.split /\s/
 
-        exe = commands[command]
-        Function("$PROGRAM_NAME", "ARGV", "STDOUT", "STDIN", exe)(command, args, STDOUT, STDIN)
+        executable = executables[command]
+
+        try
+          proc = Process.exec(executable, args)
+
+          proc.STDOUT std.IN
+          proc.STDERR err.IN
+        catch e
+          err.IN e.message
+
+      STDIN: exec
+      STDOUT: std.OUT
+      STDERR: err.OUT

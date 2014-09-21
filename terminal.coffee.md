@@ -7,7 +7,7 @@ Execute input and display output.
 
     template = require "./templates/terminal"
 
-    module.exports = ({STDIN, STDOUT}) ->
+    module.exports = ({STDIN, STDOUT, STDERR}) ->
       model =
         submit: (event) ->
           event.preventDefault()
@@ -20,7 +20,14 @@ Execute input and display output.
           input.value = ""
 
       STDOUT (data) ->
-        pre.textContent += data + "\n"
+        pre.appendChild document.createTextNode(data + "\n")
+      
+      STDERR (data) ->
+        errSpan = document.createElement("span")
+        errSpan.textContent = data + "\n"
+        errSpan.className = "error"
+
+        pre.appendChild errSpan
 
       applyStylesheet(require("./style/terminal"), "terminal")
 

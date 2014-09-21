@@ -7,7 +7,7 @@ Commands for testing
     ["echo", "cat"].forEach (name) ->
       commands[name] = PACKAGE.distribution[name].content
 
-    OS = require "./os"
+    Shell = require "./shell"
 
 Pipe input to output among running apps.
 
@@ -17,5 +17,4 @@ Kill processes.
 
 Explore a filesystem.
 
-    # TODO: Run the shell process rather than cat
-    require("./terminal")(OS.Process.exec(commands.cat))
+    require("./terminal")(Shell())
