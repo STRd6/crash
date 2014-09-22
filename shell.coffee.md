@@ -23,19 +23,19 @@ Look up executable.
       err = Pipe.Buffer()
 
       exec = (command) ->
-        [command, args...] = command.split /\s/
+        [command, args...] = command.trim().split(/\s+/)
 
         unless executable = executables[command]
           err.IN "No command '#{command}' found"
 
-        try
-          proc = Process.exec(executable, args)
+        proc = Process.exec(executable, args)
 
-          proc.STDOUT std.IN
-          proc.STDERR err.IN
-        catch e
-          err.IN e.message
+      run = (line) ->
+        proc = Pipe.connect(line.split(/\|/).map(exec)...)
 
-      STDIN: exec
+        proc.STDOUT std.IN
+        proc.STDERR err.IN
+
+      STDIN: run
       STDOUT: std.OUT
       STDERR: err.OUT

@@ -15,3 +15,12 @@ describe "OS", ->
       pipeline.STDOUT (data) ->
         assert.equal data, "hello duderman"
         done()
+
+    it "should work with one proc", (done) ->
+      p1 = Process.exec(echo, ["hello", "duderman"])
+
+      pipeline = Pipe.connect(p1)
+
+      pipeline.STDOUT (data) ->
+        assert.equal data, "hello duderman"
+        done()
