@@ -62,20 +62,20 @@ module.<span class="function"><span class="title">exports</span></span> = -&gt;
   err = Pipe.Buffer()
 
   <span class="function"><span class="title">exec</span></span> = (command) -&gt;
-    [command, args...] = command.split <span class="regexp">/\s/</span>
+    [command, args...] = command.trim().split(<span class="regexp">/\s+/</span>)
 
     <span class="keyword">unless</span> executable = executables[command]
       err.IN <span class="string">"No command '<span class="subst">#{command}</span>' found"</span>
 
-    <span class="keyword">try</span>
-      proc = Process.exec(executable, args)
+    proc = Process.exec(executable, args)
 
-      proc.STDOUT std.IN
-      proc.STDERR err.IN
-    <span class="keyword">catch</span> e
-      err.IN e.message
+  <span class="function"><span class="title">run</span></span> = (line) -&gt;
+    proc = Pipe.connect(line.split(<span class="regexp">/\|/</span>).map(exec)...)
 
-  STDIN: exec
+    proc.STDOUT std.IN
+    proc.STDERR err.IN
+
+  STDIN: run
   STDOUT: std.OUT
   STDERR: err.OUT</code></pre>
 </div>
