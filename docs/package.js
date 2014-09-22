@@ -231,7 +231,7 @@
     },
     "yes.coffee.md": {
       "path": "yes.coffee.md",
-      "content": "yes\n===\n\nPrint y or the args out repeatedly.\n\n    token = ARGS[0] or \"y\"\n\n    setInterval ->\n      STDOUT(token)\n    , 0\n",
+      "content": "yes\n===\n\nPrint y or the args out repeatedly.\n\n    token = ARGV[0] or \"y\"\n\n    setInterval ->\n      STDOUT(token)\n    , 0\n",
       "mode": "100644"
     },
     "terminal.coffee.md": {
@@ -251,7 +251,7 @@
     },
     "shell.coffee.md": {
       "path": "shell.coffee.md",
-      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    {Pipe, Process} = OS = require \"./os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\nLook up executable.\n\n    executables = {}\n\n    [\"cat\", \"echo\"].forEach (name) ->\n      executables[name] = PACKAGE.distribution[name].content\n\n    module.exports = ->\n      std = Pipe.Buffer()\n      err = Pipe.Buffer()\n\n      exec = (command) ->\n        [command, args...] = command.trim().split(/\\s+/)\n\n        unless executable = executables[command]\n          err.IN \"No command '#{command}' found\"\n\n        proc = Process.exec(executable, args)\n\n      run = (line) ->\n        proc = Pipe.connect(line.split(/\\|/).map(exec)...)\n\n        proc.STDOUT std.IN\n        proc.STDERR err.IN\n\n      STDIN: run\n      STDOUT: std.OUT\n      STDERR: err.OUT\n",
+      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    {Pipe, Process} = OS = require \"./os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\nLook up executable.\n\n    executables = {}\n\n    [\"cat\", \"echo\", \"yes\"].forEach (name) ->\n      executables[name] = PACKAGE.distribution[name].content\n\n    module.exports = ->\n      std = Pipe.Buffer()\n      err = Pipe.Buffer()\n\n      exec = (command) ->\n        [command, args...] = command.trim().split(/\\s+/)\n\n        unless executable = executables[command]\n          err.IN \"No command '#{command}' found\"\n\n        proc = Process.exec(executable, args)\n\n      run = (line) ->\n        procs = line.split(/\\|/).map(exec)\n        procs.forEach (proc) ->\n          proc.STDERR err.IN\n\n        pipe = Pipe.connect(procs...)\n\n        pipe.STDOUT std.IN\n\n      STDIN: run\n      STDOUT: std.OUT\n      STDERR: err.OUT\n",
       "mode": "100644"
     }
   },
@@ -308,7 +308,7 @@
     },
     "yes": {
       "path": "yes",
-      "content": "(function() {\n  var token;\n\n  token = ARGS[0] || \"y\";\n\n  setInterval(function() {\n    return STDOUT(token);\n  }, 0);\n\n}).call(this);\n",
+      "content": "(function() {\n  var token;\n\n  token = ARGV[0] || \"y\";\n\n  setInterval(function() {\n    return STDOUT(token);\n  }, 0);\n\n}).call(this);\n",
       "type": "blob"
     },
     "terminal": {
@@ -328,7 +328,7 @@
     },
     "shell": {
       "path": "shell",
-      "content": "(function() {\n  var OS, Pipe, Process, executables, _ref,\n    __slice = [].slice;\n\n  _ref = OS = require(\"./os\"), Pipe = _ref.Pipe, Process = _ref.Process;\n\n  executables = {};\n\n  [\"cat\", \"echo\"].forEach(function(name) {\n    return executables[name] = PACKAGE.distribution[name].content;\n  });\n\n  module.exports = function() {\n    var err, exec, run, std;\n    std = Pipe.Buffer();\n    err = Pipe.Buffer();\n    exec = function(command) {\n      var args, executable, proc, _ref1;\n      _ref1 = command.trim().split(/\\s+/), command = _ref1[0], args = 2 <= _ref1.length ? __slice.call(_ref1, 1) : [];\n      if (!(executable = executables[command])) {\n        err.IN(\"No command '\" + command + \"' found\");\n      }\n      return proc = Process.exec(executable, args);\n    };\n    run = function(line) {\n      var proc;\n      proc = Pipe.connect.apply(Pipe, line.split(/\\|/).map(exec));\n      proc.STDOUT(std.IN);\n      return proc.STDERR(err.IN);\n    };\n    return {\n      STDIN: run,\n      STDOUT: std.OUT,\n      STDERR: err.OUT\n    };\n  };\n\n}).call(this);\n",
+      "content": "(function() {\n  var OS, Pipe, Process, executables, _ref,\n    __slice = [].slice;\n\n  _ref = OS = require(\"./os\"), Pipe = _ref.Pipe, Process = _ref.Process;\n\n  executables = {};\n\n  [\"cat\", \"echo\", \"yes\"].forEach(function(name) {\n    return executables[name] = PACKAGE.distribution[name].content;\n  });\n\n  module.exports = function() {\n    var err, exec, run, std;\n    std = Pipe.Buffer();\n    err = Pipe.Buffer();\n    exec = function(command) {\n      var args, executable, proc, _ref1;\n      _ref1 = command.trim().split(/\\s+/), command = _ref1[0], args = 2 <= _ref1.length ? __slice.call(_ref1, 1) : [];\n      if (!(executable = executables[command])) {\n        err.IN(\"No command '\" + command + \"' found\");\n      }\n      return proc = Process.exec(executable, args);\n    };\n    run = function(line) {\n      var pipe, procs;\n      procs = line.split(/\\|/).map(exec);\n      procs.forEach(function(proc) {\n        return proc.STDERR(err.IN);\n      });\n      pipe = Pipe.connect.apply(Pipe, procs);\n      return pipe.STDOUT(std.IN);\n    };\n    return {\n      STDIN: run,\n      STDOUT: std.OUT,\n      STDERR: err.OUT\n    };\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "lib/hamlet-runtime": {

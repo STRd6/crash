@@ -54,7 +54,7 @@ calls.</p>
             </div>
             <div class="content"><pre><code class="lang-coffeescript">executables = {}
 
-[<span class="string">"cat"</span>, <span class="string">"echo"</span>].forEach (name) -&gt;
+[<span class="string">"cat"</span>, <span class="string">"echo"</span>, <span class="string">"yes"</span>].forEach (name) -&gt;
   executables[name] = PACKAGE.distribution[name].content
 
 module.<span class="function"><span class="title">exports</span></span> = -&gt;
@@ -70,10 +70,13 @@ module.<span class="function"><span class="title">exports</span></span> = -&gt;
     proc = Process.exec(executable, args)
 
   <span class="function"><span class="title">run</span></span> = (line) -&gt;
-    proc = Pipe.connect(line.split(<span class="regexp">/\|/</span>).map(exec)...)
+    procs = line.split(<span class="regexp">/\|/</span>).map(exec)
+    procs.forEach (proc) -&gt;
+      proc.STDERR err.IN
 
-    proc.STDOUT std.IN
-    proc.STDERR err.IN
+    pipe = Pipe.connect(procs...)
+
+    pipe.STDOUT std.IN
 
   STDIN: run
   STDOUT: std.OUT
