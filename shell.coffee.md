@@ -15,7 +15,7 @@ Look up executable.
 
     executables = {}
 
-    ["cat", "echo"].forEach (name) ->
+    ["cat", "echo", "yes"].forEach (name) ->
       executables[name] = PACKAGE.distribution[name].content
 
     module.exports = ->
@@ -31,10 +31,13 @@ Look up executable.
         proc = Process.exec(executable, args)
 
       run = (line) ->
-        proc = Pipe.connect(line.split(/\|/).map(exec)...)
+        procs = line.split(/\|/).map(exec)
+        procs.forEach (proc) ->
+          proc.STDERR err.IN
 
-        proc.STDOUT std.IN
-        proc.STDERR err.IN
+        pipe = Pipe.connect(procs...)
+
+        pipe.STDOUT std.IN
 
       STDIN: run
       STDOUT: std.OUT
