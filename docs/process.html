@@ -38,8 +38,8 @@
             <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Is there a better way to handle system bootstrapping?</span>
 boot = PACKAGE.distribution.proc_setup.content
 
-module.exports = 
-  exec: (programCode, args=[]) -&gt;
+module.exports =
+  spawn: (programCode, args=[]) -&gt;
 
     <span class="comment"># Set up program environment with a wrapper</span>
     <span class="comment"># that provides STDOUT, ARGV, and anything else this "OS" provides</span>

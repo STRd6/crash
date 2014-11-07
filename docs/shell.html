@@ -34,7 +34,7 @@
               </div>
               <p>Execute commands, parse with a bash like syntax.</p>
 <p>TODO: This should be a &#39;workerspace&#39; program. Ideally we&#39;ll be able to require
-the system library instead of os which will wrap the os functions with system 
+the system library instead of os which will wrap the os functions with system
 calls.</p>
 
             </div>
@@ -67,7 +67,7 @@ module.<span class="function"><span class="title">exports</span></span> = -&gt;
     <span class="keyword">unless</span> executable = executables[command]
       err.IN <span class="string">"No command '<span class="subst">#{command}</span>' found"</span>
 
-    proc = Process.exec(executable, args)
+    proc = Process.spawn(executable, args)
 
   <span class="function"><span class="title">run</span></span> = (line) -&gt;
     procs = line.split(<span class="regexp">/\|/</span>).map(exec)

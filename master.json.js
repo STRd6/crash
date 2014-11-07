@@ -24,6 +24,18 @@ window["STRd6/crash:master"]({
       "mode": "100644",
       "type": "blob"
     },
+    "os.coffee.md": {
+      "path": "os.coffee.md",
+      "content": "Crash OS\n========\n\nLaunch processes.\n\nSystem calls.\n\nUserspace lives in WebWorkers, they'll use `proc_setup` to provide the library\nto make system calls.\n\nFile systems.\n\nMessages\n--------\n\nProcess out:\n\n`STDOUT`\n`STDERR`\n\nProcess in:\n\n`STDIN`\n`SIG*`\n\nSystem\n------\n\nThis file is the host OS.\n\n    module.exports =\n      Pipe: require \"./pipe\"\n      Process: require \"./process\"\n",
+      "mode": "100644",
+      "type": "blob"
+    },
+    "pipe.coffee.md": {
+      "path": "pipe.coffee.md",
+      "content": "Pipe\n====\n\nConnect processes!\n\n    # TODO: Figure out how to get a decent buffer dealy\n    # TODO: Maybe keep a little buffer to collect data before a handler is\n    # attached\n    Buffer = ->\n      outFn = null\n\n      IN: (data) ->\n        outFn?(data)\n\n      OUT:\n        (handler) ->\n          outFn = handler\n\n    module.exports =\n      Buffer: Buffer\n\n      connect: (procs...) ->\n        procs.forEach (left, index) ->\n          right = procs[index + 1]\n\n          if right\n            left.STDOUT right.STDIN\n\n        STDOUT: procs[procs.length-1].STDOUT\n        STDIN: procs[0].STDIN\n",
+      "mode": "100644",
+      "type": "blob"
+    },
     "pixie.cson": {
       "path": "pixie.cson",
       "content": "version: \"0.1.0\"\nremoteDependencies: [\n  \"https://code.jquery.com/jquery-1.11.0.min.js\"\n]\ndependencies:\n  os_client: \"STRd6/os_client:v0.0.0\"\n  require: \"distri/require:v0.4.3-pre.0\"\n  util: \"distri/util:v0.1.0\"\n",
@@ -38,7 +50,37 @@ window["STRd6/crash:master"]({
     },
     "process.coffee.md": {
       "path": "process.coffee.md",
-      "content": "Process\n=======\n\nCreate an run a process. (A fancily wrapped web worker).\n\n    # TODO: Is there a better way to handle system bootstrapping?\n    boot = PACKAGE.distribution.proc_setup.content\n\n    module.exports = \n      exec: (programCode, args=[]) ->\n\n        # Set up program environment with a wrapper\n        # that provides STDOUT, ARGV, and anything else this \"OS\" provides\n\n        pkg =\n          entryPoint: \"main\"\n          distribution:\n            main:\n              content: programCode\n          dependencies:\n            require: PACKAGE.dependencies.require\n            os: PACKAGE.dependencies.os_client\n\n        resourceUrl = URL.createObjectURL(new Blob([\n          \"PACKAGE=#{JSON.stringify(pkg)}\\n\", # Set up PACKAGE\n          \"ARGV=#{JSON.stringify(args)};\\n\", # Set up ARGV\n          boot\n        ], type: \"application/javascript\"))\n  \n        worker = new Worker(resourceUrl)\n  \n        worker.onmessage = ({data}) ->\n          {type, message} = data\n  \n          switch type\n            when \"STDOUT\"\n              handlers.forEach (handler) ->\n                handler message\n            when \"STDERR\"\n              errHandlers.forEach (handler) ->\n                handler message\n            when \"SYS\"\n              {method, args} = message\n              systemCall[method](args...)\n            else\n              console.log \"Unknown type\"\n  \n        worker.onerror = (e) ->\n          console.log e\n          errHandlers.forEach (handler) ->\n            handler e\n  \n        # TODO: should we only allow one handler per channel?\n        handlers = []\n        errHandlers = []\n  \n        STDIN: (data) ->\n          # Pass data to process' STDIN\n          worker.postMessage\n            type: \"STDIN\"\n            message: data\n        STDERR: (handler) ->\n          errHandlers.push handler\n        STDOUT: (handler) ->\n          handlers.push handler\n",
+      "content": "Process\n=======\n\nCreate an run a process. (A fancily wrapped web worker).\n\n    # TODO: Is there a better way to handle system bootstrapping?\n    boot = PACKAGE.distribution.proc_setup.content\n\n    module.exports =\n      spawn: (programCode, args=[]) ->\n\n        # Set up program environment with a wrapper\n        # that provides STDOUT, ARGV, and anything else this \"OS\" provides\n\n        pkg =\n          entryPoint: \"main\"\n          distribution:\n            main:\n              content: programCode\n          dependencies:\n            require: PACKAGE.dependencies.require\n            os: PACKAGE.dependencies.os_client\n\n        resourceUrl = URL.createObjectURL(new Blob([\n          \"PACKAGE=#{JSON.stringify(pkg)}\\n\", # Set up PACKAGE\n          \"ARGV=#{JSON.stringify(args)};\\n\", # Set up ARGV\n          boot\n        ], type: \"application/javascript\"))\n\n        worker = new Worker(resourceUrl)\n\n        worker.onmessage = ({data}) ->\n          {type, message} = data\n\n          switch type\n            when \"STDOUT\"\n              handlers.forEach (handler) ->\n                handler message\n            when \"STDERR\"\n              errHandlers.forEach (handler) ->\n                handler message\n            when \"SYS\"\n              {method, args} = message\n              systemCall[method](args...)\n            else\n              console.log \"Unknown type\"\n\n        worker.onerror = (e) ->\n          console.log e\n          errHandlers.forEach (handler) ->\n            handler e\n\n        # TODO: should we only allow one handler per channel?\n        handlers = []\n        errHandlers = []\n\n        STDIN: (data) ->\n          # Pass data to process' STDIN\n          worker.postMessage\n            type: \"STDIN\"\n            message: data\n        STDERR: (handler) ->\n          errHandlers.push handler\n        STDOUT: (handler) ->\n          handlers.push handler\n",
+      "mode": "100644",
+      "type": "blob"
+    },
+    "shell.coffee.md": {
+      "path": "shell.coffee.md",
+      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system\ncalls.\n\n    {Pipe, Process} = OS = require \"./os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\nLook up executable.\n\n    executables = {}\n\n    [\"cat\", \"echo\", \"yes\"].forEach (name) ->\n      executables[name] = PACKAGE.distribution[name].content\n\n    module.exports = ->\n      std = Pipe.Buffer()\n      err = Pipe.Buffer()\n\n      exec = (command) ->\n        [command, args...] = command.trim().split(/\\s+/)\n\n        unless executable = executables[command]\n          err.IN \"No command '#{command}' found\"\n\n        proc = Process.spawn(executable, args)\n\n      run = (line) ->\n        procs = line.split(/\\|/).map(exec)\n        procs.forEach (proc) ->\n          proc.STDERR err.IN\n\n        pipe = Pipe.connect(procs...)\n\n        pipe.STDOUT std.IN\n\n      STDIN: run\n      STDOUT: std.OUT\n      STDERR: err.OUT\n",
+      "mode": "100644",
+      "type": "blob"
+    },
+    "style/terminal.styl": {
+      "path": "style/terminal.styl",
+      "content": "html, body, .terminal, pre\n  height: 100%\n\n.terminal\n  position: relative\n\npre\n  background-color: black\n  box-sizing: border-box\n  padding-bottom: 20px\n\ninput\n  background-color: black\n  box-sizing: border-box\n  border: none\n  bottom: 0\n  padding: 0 0 0 60px\n  position: absolute\n  width: 100%\n\n.prompt\n  bottom: 0\n  left: 0\n  position: absolute\n\nbody, pre, input\n  color: #0F0\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace\n  font-size: 18px\n  margin: 0\n\n.error\n  color: red\n",
+      "mode": "100644",
+      "type": "blob"
+    },
+    "templates/terminal.haml": {
+      "path": "templates/terminal.haml",
+      "content": "%form.terminal(@submit)\n  %pre\n  %input\n  .prompt crash>\n",
+      "mode": "100644",
+      "type": "blob"
+    },
+    "terminal.coffee.md": {
+      "path": "terminal.coffee.md",
+      "content": "Terminal\n========\n\nExecute input and display output.\n\n    {applyStylesheet} = require \"util\"\n\n    template = require \"./templates/terminal\"\n\n    module.exports = ({STDIN, STDOUT, STDERR}) ->\n      model =\n        submit: (event) ->\n          event.preventDefault()\n\n          command = input.value\n          input.value = \"\"\n\n          STDIN(command)\n\n          input.value = \"\"\n\n      STDOUT (data) ->\n        pre.appendChild document.createTextNode(data + \"\\n\")\n\n      STDERR (data) ->\n        errSpan = document.createElement(\"span\")\n        errSpan.textContent = data + \"\\n\"\n        errSpan.className = \"error\"\n\n        pre.appendChild errSpan\n\n      applyStylesheet(require(\"./style/terminal\"), \"terminal\")\n\n      element = template(model)\n\n      document.body.appendChild element\n\n      input = element.getElementsByTagName(\"input\")[0]\n      pre = element.getElementsByTagName(\"pre\")[0]\n\n      return element\n",
+      "mode": "100644",
+      "type": "blob"
+    },
+    "test/os.coffee": {
+      "path": "test/os.coffee",
+      "content": "{Process, Pipe} = OS = require \"../os\"\n\necho = PACKAGE.distribution.echo.content\ncat = PACKAGE.distribution.cat.content\n\ndescribe \"OS\", ->\n  describe \"pipes\", ->\n    it \"should pass data from one process to another\", (done) ->\n      p1 = Process.exec(echo, [\"hello\", \"duderman\"])\n\n      p2 = Process.exec(cat)\n\n      pipeline = Pipe.connect(p1, p2)\n\n      pipeline.STDOUT (data) ->\n        assert.equal data, \"hello duderman\"\n        done()\n\n    it \"should work with one proc\", (done) ->\n      p1 = Process.exec(echo, [\"hello\", \"duderman\"])\n\n      pipeline = Pipe.connect(p1)\n\n      pipeline.STDOUT (data) ->\n        assert.equal data, \"hello duderman\"\n        done()\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -48,45 +90,11 @@ window["STRd6/crash:master"]({
       "mode": "100644",
       "type": "blob"
     },
-    "os.coffee.md": {
-      "path": "os.coffee.md",
-      "content": "Crash OS\n========\n\nLaunch processes.\n\nSystem calls.\n\nUserspace lives in WebWorkers, they'll use `proc_setup` to provide the library\nto make system calls.\n\nFile systems.\n\nMessages\n--------\n\nProcess out:\n\n`STDOUT`\n`STDERR`\n\nProcess in:\n\n`STDIN`\n`SIG*`\n\nSystem\n------\n\nThis file is the host OS.\n\n    module.exports =\n      Pipe: require \"./pipe\"\n      Process: require \"./process\"\n",
-      "mode": "100644"
-    },
-    "pipe.coffee.md": {
-      "path": "pipe.coffee.md",
-      "content": "Pipe\n====\n\nConnect processes!\n\n    # TODO: Figure out how to get a decent buffer dealy\n    # TODO: Maybe keep a little buffer to collect data before a handler is \n    # attached\n    Buffer = ->\n      outFn = null\n\n      IN: (data) ->\n        outFn?(data)\n\n      OUT:\n        (handler) ->\n          outFn = handler\n\n    module.exports = \n      Buffer: Buffer\n\n      connect: (procs...) ->\n        procs.forEach (left, index) ->\n          right = procs[index + 1]\n\n          if right\n            left.STDOUT right.STDIN\n\n        STDOUT: procs[procs.length-1].STDOUT\n        STDIN: procs[0].STDIN\n",
-      "mode": "100644"
-    },
-    "test/os.coffee": {
-      "path": "test/os.coffee",
-      "content": "{Process, Pipe} = OS = require \"../os\"\n\necho = PACKAGE.distribution.echo.content\ncat = PACKAGE.distribution.cat.content\n\ndescribe \"OS\", ->\n  describe \"pipes\", ->\n    it \"should pass data from one process to another\", (done) ->\n      p1 = Process.exec(echo, [\"hello\", \"duderman\"])\n\n      p2 = Process.exec(cat)\n\n      pipeline = Pipe.connect(p1, p2)\n\n      pipeline.STDOUT (data) ->\n        assert.equal data, \"hello duderman\"\n        done()\n\n    it \"should work with one proc\", (done) ->\n      p1 = Process.exec(echo, [\"hello\", \"duderman\"])\n\n      pipeline = Pipe.connect(p1)\n\n      pipeline.STDOUT (data) ->\n        assert.equal data, \"hello duderman\"\n        done()\n",
-      "mode": "100644"
-    },
     "yes.coffee.md": {
       "path": "yes.coffee.md",
       "content": "yes\n===\n\nPrint y or the args out repeatedly.\n\n    token = ARGV[0] or \"y\"\n\n    setInterval ->\n      STDOUT(token)\n    , 0\n",
-      "mode": "100644"
-    },
-    "terminal.coffee.md": {
-      "path": "terminal.coffee.md",
-      "content": "Terminal\n========\n\nExecute input and display output.\n\n    {applyStylesheet} = require \"util\"\n\n    template = require \"./templates/terminal\"\n\n    module.exports = ({STDIN, STDOUT, STDERR}) ->\n      model =\n        submit: (event) ->\n          event.preventDefault()\n\n          command = input.value\n          input.value = \"\"\n\n          STDIN(command)\n\n          input.value = \"\"\n\n      STDOUT (data) ->\n        pre.appendChild document.createTextNode(data + \"\\n\")\n      \n      STDERR (data) ->\n        errSpan = document.createElement(\"span\")\n        errSpan.textContent = data + \"\\n\"\n        errSpan.className = \"error\"\n\n        pre.appendChild errSpan\n\n      applyStylesheet(require(\"./style/terminal\"), \"terminal\")\n\n      element = template(model)\n\n      document.body.appendChild element\n\n      input = element.getElementsByTagName(\"input\")[0]\n      pre = element.getElementsByTagName(\"pre\")[0]\n\n      return element",
-      "mode": "100644"
-    },
-    "templates/terminal.haml": {
-      "path": "templates/terminal.haml",
-      "content": "%form.terminal(@submit)\n  %pre\n  %input\n  .prompt crash>\n",
-      "mode": "100644"
-    },
-    "style/terminal.styl": {
-      "path": "style/terminal.styl",
-      "content": "html, body, .terminal, pre\n  height: 100%\n\n.terminal\n  position: relative\n\npre\n  background-color: black\n  box-sizing: border-box\n  padding-bottom: 20px\n\ninput\n  background-color: black\n  box-sizing: border-box\n  border: none\n  bottom: 0\n  padding: 0 0 0 60px\n  position: absolute\n  width: 100%\n\n.prompt\n  bottom: 0\n  left: 0\n  position: absolute\n\nbody, pre, input\n  color: #0F0\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace\n  font-size: 18px\n  margin: 0\n\n.error\n  color: red\n",
-      "mode": "100644"
-    },
-    "shell.coffee.md": {
-      "path": "shell.coffee.md",
-      "content": "Shell\n=====\n\nExecute commands, parse with a bash like syntax.\n\nTODO: This should be a 'workerspace' program. Ideally we'll be able to require\nthe system library instead of os which will wrap the os functions with system \ncalls.\n\n    {Pipe, Process} = OS = require \"./os\"\n\nNeed to set up `ENV`, `PATH`, etc...\n\nLook up executable.\n\n    executables = {}\n\n    [\"cat\", \"echo\", \"yes\"].forEach (name) ->\n      executables[name] = PACKAGE.distribution[name].content\n\n    module.exports = ->\n      std = Pipe.Buffer()\n      err = Pipe.Buffer()\n\n      exec = (command) ->\n        [command, args...] = command.trim().split(/\\s+/)\n\n        unless executable = executables[command]\n          err.IN \"No command '#{command}' found\"\n\n        proc = Process.exec(executable, args)\n\n      run = (line) ->\n        procs = line.split(/\\|/).map(exec)\n        procs.forEach (proc) ->\n          proc.STDERR err.IN\n\n        pipe = Pipe.connect(procs...)\n\n        pipe.STDOUT std.IN\n\n      STDIN: run\n      STDOUT: std.OUT\n      STDERR: err.OUT\n",
-      "mode": "100644"
+      "mode": "100644",
+      "type": "blob"
     }
   },
   "distribution": {
@@ -105,6 +113,16 @@ window["STRd6/crash:master"]({
       "content": "(function() {\n  var Shell, commands;\n\n  commands = {};\n\n  [\"echo\", \"cat\"].forEach(function(name) {\n    return commands[name] = PACKAGE.distribution[name].content;\n  });\n\n  Shell = require(\"./shell\");\n\n  require(\"./terminal\")(Shell());\n\n}).call(this);\n",
       "type": "blob"
     },
+    "os": {
+      "path": "os",
+      "content": "(function() {\n  module.exports = {\n    Pipe: require(\"./pipe\"),\n    Process: require(\"./process\")\n  };\n\n}).call(this);\n",
+      "type": "blob"
+    },
+    "pipe": {
+      "path": "pipe",
+      "content": "(function() {\n  var Buffer,\n    __slice = [].slice;\n\n  Buffer = function() {\n    var outFn;\n    outFn = null;\n    return {\n      IN: function(data) {\n        return typeof outFn === \"function\" ? outFn(data) : void 0;\n      },\n      OUT: function(handler) {\n        return outFn = handler;\n      }\n    };\n  };\n\n  module.exports = {\n    Buffer: Buffer,\n    connect: function() {\n      var procs;\n      procs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n      procs.forEach(function(left, index) {\n        var right;\n        right = procs[index + 1];\n        if (right) {\n          return left.STDOUT(right.STDIN);\n        }\n      });\n      return {\n        STDOUT: procs[procs.length - 1].STDOUT,\n        STDIN: procs[0].STDIN\n      };\n    }\n  };\n\n}).call(this);\n",
+      "type": "blob"
+    },
     "pixie": {
       "path": "pixie",
       "content": "module.exports = {\"version\":\"0.1.0\",\"remoteDependencies\":[\"https://code.jquery.com/jquery-1.11.0.min.js\"],\"dependencies\":{\"os_client\":\"STRd6/os_client:v0.0.0\",\"require\":\"distri/require:v0.4.3-pre.0\",\"util\":\"distri/util:v0.1.0\"}};",
@@ -117,42 +135,12 @@ window["STRd6/crash:master"]({
     },
     "process": {
       "path": "process",
-      "content": "(function() {\n  var boot;\n\n  boot = PACKAGE.distribution.proc_setup.content;\n\n  module.exports = {\n    exec: function(programCode, args) {\n      var errHandlers, handlers, pkg, resourceUrl, worker;\n      if (args == null) {\n        args = [];\n      }\n      pkg = {\n        entryPoint: \"main\",\n        distribution: {\n          main: {\n            content: programCode\n          }\n        },\n        dependencies: {\n          require: PACKAGE.dependencies.require,\n          os: PACKAGE.dependencies.os_client\n        }\n      };\n      resourceUrl = URL.createObjectURL(new Blob([\"PACKAGE=\" + (JSON.stringify(pkg)) + \"\\n\", \"ARGV=\" + (JSON.stringify(args)) + \";\\n\", boot], {\n        type: \"application/javascript\"\n      }));\n      worker = new Worker(resourceUrl);\n      worker.onmessage = function(_arg) {\n        var data, message, method, type;\n        data = _arg.data;\n        type = data.type, message = data.message;\n        switch (type) {\n          case \"STDOUT\":\n            return handlers.forEach(function(handler) {\n              return handler(message);\n            });\n          case \"STDERR\":\n            return errHandlers.forEach(function(handler) {\n              return handler(message);\n            });\n          case \"SYS\":\n            method = message.method, args = message.args;\n            return systemCall[method].apply(systemCall, args);\n          default:\n            return console.log(\"Unknown type\");\n        }\n      };\n      worker.onerror = function(e) {\n        console.log(e);\n        return errHandlers.forEach(function(handler) {\n          return handler(e);\n        });\n      };\n      handlers = [];\n      errHandlers = [];\n      return {\n        STDIN: function(data) {\n          return worker.postMessage({\n            type: \"STDIN\",\n            message: data\n          });\n        },\n        STDERR: function(handler) {\n          return errHandlers.push(handler);\n        },\n        STDOUT: function(handler) {\n          return handlers.push(handler);\n        }\n      };\n    }\n  };\n\n}).call(this);\n",
+      "content": "(function() {\n  var boot;\n\n  boot = PACKAGE.distribution.proc_setup.content;\n\n  module.exports = {\n    spawn: function(programCode, args) {\n      var errHandlers, handlers, pkg, resourceUrl, worker;\n      if (args == null) {\n        args = [];\n      }\n      pkg = {\n        entryPoint: \"main\",\n        distribution: {\n          main: {\n            content: programCode\n          }\n        },\n        dependencies: {\n          require: PACKAGE.dependencies.require,\n          os: PACKAGE.dependencies.os_client\n        }\n      };\n      resourceUrl = URL.createObjectURL(new Blob([\"PACKAGE=\" + (JSON.stringify(pkg)) + \"\\n\", \"ARGV=\" + (JSON.stringify(args)) + \";\\n\", boot], {\n        type: \"application/javascript\"\n      }));\n      worker = new Worker(resourceUrl);\n      worker.onmessage = function(_arg) {\n        var data, message, method, type;\n        data = _arg.data;\n        type = data.type, message = data.message;\n        switch (type) {\n          case \"STDOUT\":\n            return handlers.forEach(function(handler) {\n              return handler(message);\n            });\n          case \"STDERR\":\n            return errHandlers.forEach(function(handler) {\n              return handler(message);\n            });\n          case \"SYS\":\n            method = message.method, args = message.args;\n            return systemCall[method].apply(systemCall, args);\n          default:\n            return console.log(\"Unknown type\");\n        }\n      };\n      worker.onerror = function(e) {\n        console.log(e);\n        return errHandlers.forEach(function(handler) {\n          return handler(e);\n        });\n      };\n      handlers = [];\n      errHandlers = [];\n      return {\n        STDIN: function(data) {\n          return worker.postMessage({\n            type: \"STDIN\",\n            message: data\n          });\n        },\n        STDERR: function(handler) {\n          return errHandlers.push(handler);\n        },\n        STDOUT: function(handler) {\n          return handlers.push(handler);\n        }\n      };\n    }\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
-    "test/process": {
-      "path": "test/process",
-      "content": "(function() {\n  var Process;\n\n  Process = require(\"../process\");\n\n  describe(\"process\", function() {\n    it(\"should spawn a web worker and do stuff\", function(done) {\n      var p;\n      p = Process.exec(\"STDOUT('hello world')\");\n      return p.STDOUT(function(data) {\n        assert.equal(data, \"hello world\");\n        return done();\n      });\n    });\n    return describe(\"echo\", function() {\n      var echo;\n      echo = PACKAGE.distribution.echo.content;\n      return it(\"should echo command line args\", function(done) {\n        var p;\n        p = Process.exec(echo, [\"hello\", \"duderman\"]);\n        return p.STDOUT(function(data) {\n          assert.equal(data, \"hello duderman\");\n          return done();\n        });\n      });\n    });\n  });\n\n}).call(this);\n",
-      "type": "blob"
-    },
-    "os": {
-      "path": "os",
-      "content": "(function() {\n  module.exports = {\n    Pipe: require(\"./pipe\"),\n    Process: require(\"./process\")\n  };\n\n}).call(this);\n",
-      "type": "blob"
-    },
-    "pipe": {
-      "path": "pipe",
-      "content": "(function() {\n  var Buffer,\n    __slice = [].slice;\n\n  Buffer = function() {\n    var outFn;\n    outFn = null;\n    return {\n      IN: function(data) {\n        return typeof outFn === \"function\" ? outFn(data) : void 0;\n      },\n      OUT: function(handler) {\n        return outFn = handler;\n      }\n    };\n  };\n\n  module.exports = {\n    Buffer: Buffer,\n    connect: function() {\n      var procs;\n      procs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n      procs.forEach(function(left, index) {\n        var right;\n        right = procs[index + 1];\n        if (right) {\n          return left.STDOUT(right.STDIN);\n        }\n      });\n      return {\n        STDOUT: procs[procs.length - 1].STDOUT,\n        STDIN: procs[0].STDIN\n      };\n    }\n  };\n\n}).call(this);\n",
-      "type": "blob"
-    },
-    "test/os": {
-      "path": "test/os",
-      "content": "(function() {\n  var OS, Pipe, Process, cat, echo, _ref;\n\n  _ref = OS = require(\"../os\"), Process = _ref.Process, Pipe = _ref.Pipe;\n\n  echo = PACKAGE.distribution.echo.content;\n\n  cat = PACKAGE.distribution.cat.content;\n\n  describe(\"OS\", function() {\n    return describe(\"pipes\", function() {\n      it(\"should pass data from one process to another\", function(done) {\n        var p1, p2, pipeline;\n        p1 = Process.exec(echo, [\"hello\", \"duderman\"]);\n        p2 = Process.exec(cat);\n        pipeline = Pipe.connect(p1, p2);\n        return pipeline.STDOUT(function(data) {\n          assert.equal(data, \"hello duderman\");\n          return done();\n        });\n      });\n      return it(\"should work with one proc\", function(done) {\n        var p1, pipeline;\n        p1 = Process.exec(echo, [\"hello\", \"duderman\"]);\n        pipeline = Pipe.connect(p1);\n        return pipeline.STDOUT(function(data) {\n          assert.equal(data, \"hello duderman\");\n          return done();\n        });\n      });\n    });\n  });\n\n}).call(this);\n",
-      "type": "blob"
-    },
-    "yes": {
-      "path": "yes",
-      "content": "(function() {\n  var token;\n\n  token = ARGV[0] || \"y\";\n\n  setInterval(function() {\n    return STDOUT(token);\n  }, 0);\n\n}).call(this);\n",
-      "type": "blob"
-    },
-    "terminal": {
-      "path": "terminal",
-      "content": "(function() {\n  var applyStylesheet, template;\n\n  applyStylesheet = require(\"util\").applyStylesheet;\n\n  template = require(\"./templates/terminal\");\n\n  module.exports = function(_arg) {\n    var STDERR, STDIN, STDOUT, element, input, model, pre;\n    STDIN = _arg.STDIN, STDOUT = _arg.STDOUT, STDERR = _arg.STDERR;\n    model = {\n      submit: function(event) {\n        var command;\n        event.preventDefault();\n        command = input.value;\n        input.value = \"\";\n        STDIN(command);\n        return input.value = \"\";\n      }\n    };\n    STDOUT(function(data) {\n      return pre.appendChild(document.createTextNode(data + \"\\n\"));\n    });\n    STDERR(function(data) {\n      var errSpan;\n      errSpan = document.createElement(\"span\");\n      errSpan.textContent = data + \"\\n\";\n      errSpan.className = \"error\";\n      return pre.appendChild(errSpan);\n    });\n    applyStylesheet(require(\"./style/terminal\"), \"terminal\");\n    element = template(model);\n    document.body.appendChild(element);\n    input = element.getElementsByTagName(\"input\")[0];\n    pre = element.getElementsByTagName(\"pre\")[0];\n    return element;\n  };\n\n}).call(this);\n",
-      "type": "blob"
-    },
-    "templates/terminal": {
-      "path": "templates/terminal",
-      "content": "module.exports = (function(data) {\n  return (function() {\n    var __runtime;\n    __runtime = require(\"/lib/hamlet-runtime\")(this);\n    __runtime.push(document.createDocumentFragment());\n    __runtime.push(document.createElement(\"form\"));\n    __runtime.classes(\"terminal\");\n    __runtime.attribute(\"submit\", this.submit);\n    __runtime.push(document.createElement(\"pre\"));\n    __runtime.pop();\n    __runtime.push(document.createElement(\"input\"));\n    __runtime.pop();\n    __runtime.push(document.createElement(\"div\"));\n    __runtime.classes(\"prompt\");\n    __runtime.text(\"crash>\\n\");\n    __runtime.pop();\n    __runtime.pop();\n    return __runtime.pop();\n  }).call(data);\n});\n",
+    "shell": {
+      "path": "shell",
+      "content": "(function() {\n  var OS, Pipe, Process, executables, _ref,\n    __slice = [].slice;\n\n  _ref = OS = require(\"./os\"), Pipe = _ref.Pipe, Process = _ref.Process;\n\n  executables = {};\n\n  [\"cat\", \"echo\", \"yes\"].forEach(function(name) {\n    return executables[name] = PACKAGE.distribution[name].content;\n  });\n\n  module.exports = function() {\n    var err, exec, run, std;\n    std = Pipe.Buffer();\n    err = Pipe.Buffer();\n    exec = function(command) {\n      var args, executable, proc, _ref1;\n      _ref1 = command.trim().split(/\\s+/), command = _ref1[0], args = 2 <= _ref1.length ? __slice.call(_ref1, 1) : [];\n      if (!(executable = executables[command])) {\n        err.IN(\"No command '\" + command + \"' found\");\n      }\n      return proc = Process.spawn(executable, args);\n    };\n    run = function(line) {\n      var pipe, procs;\n      procs = line.split(/\\|/).map(exec);\n      procs.forEach(function(proc) {\n        return proc.STDERR(err.IN);\n      });\n      pipe = Pipe.connect.apply(Pipe, procs);\n      return pipe.STDOUT(std.IN);\n    };\n    return {\n      STDIN: run,\n      STDOUT: std.OUT,\n      STDERR: err.OUT\n    };\n  };\n\n}).call(this);\n",
       "type": "blob"
     },
     "style/terminal": {
@@ -160,9 +148,29 @@ window["STRd6/crash:master"]({
       "content": "module.exports = \"html,\\nbody,\\n.terminal,\\npre {\\n  height: 100%;\\n}\\n\\n.terminal {\\n  position: relative;\\n}\\n\\npre {\\n  background-color: black;\\n  padding-bottom: 20px;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\ninput {\\n  background-color: black;\\n  border: none;\\n  bottom: 0;\\n  padding: 0 0 0 60px;\\n  position: absolute;\\n  width: 100%;\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\n.prompt {\\n  bottom: 0;\\n  left: 0;\\n  position: absolute;\\n}\\n\\nbody,\\npre,\\ninput {\\n  color: #0F0;\\n  font-family: Monaco, Menlo, 'Ubuntu Mono', 'Droid Sans Mono', Consolas, monospace;\\n  font-size: 18px;\\n  margin: 0;\\n}\\n\\n.error {\\n  color: red;\\n}\";",
       "type": "blob"
     },
-    "shell": {
-      "path": "shell",
-      "content": "(function() {\n  var OS, Pipe, Process, executables, _ref,\n    __slice = [].slice;\n\n  _ref = OS = require(\"./os\"), Pipe = _ref.Pipe, Process = _ref.Process;\n\n  executables = {};\n\n  [\"cat\", \"echo\", \"yes\"].forEach(function(name) {\n    return executables[name] = PACKAGE.distribution[name].content;\n  });\n\n  module.exports = function() {\n    var err, exec, run, std;\n    std = Pipe.Buffer();\n    err = Pipe.Buffer();\n    exec = function(command) {\n      var args, executable, proc, _ref1;\n      _ref1 = command.trim().split(/\\s+/), command = _ref1[0], args = 2 <= _ref1.length ? __slice.call(_ref1, 1) : [];\n      if (!(executable = executables[command])) {\n        err.IN(\"No command '\" + command + \"' found\");\n      }\n      return proc = Process.exec(executable, args);\n    };\n    run = function(line) {\n      var pipe, procs;\n      procs = line.split(/\\|/).map(exec);\n      procs.forEach(function(proc) {\n        return proc.STDERR(err.IN);\n      });\n      pipe = Pipe.connect.apply(Pipe, procs);\n      return pipe.STDOUT(std.IN);\n    };\n    return {\n      STDIN: run,\n      STDOUT: std.OUT,\n      STDERR: err.OUT\n    };\n  };\n\n}).call(this);\n",
+    "templates/terminal": {
+      "path": "templates/terminal",
+      "content": "module.exports = (function(data) {\n  return (function() {\n    var __runtime;\n    __runtime = require(\"/lib/hamlet-runtime\")(this);\n    __runtime.push(document.createDocumentFragment());\n    __runtime.push(document.createElement(\"form\"));\n    __runtime.classes(\"terminal\");\n    __runtime.attribute(\"submit\", this.submit);\n    __runtime.push(document.createElement(\"pre\"));\n    __runtime.pop();\n    __runtime.push(document.createElement(\"input\"));\n    __runtime.pop();\n    __runtime.push(document.createElement(\"div\"));\n    __runtime.classes(\"prompt\");\n    __runtime.text(\"crash>\\n\");\n    __runtime.pop();\n    __runtime.pop();\n    return __runtime.pop();\n  }).call(data);\n});\n",
+      "type": "blob"
+    },
+    "terminal": {
+      "path": "terminal",
+      "content": "(function() {\n  var applyStylesheet, template;\n\n  applyStylesheet = require(\"util\").applyStylesheet;\n\n  template = require(\"./templates/terminal\");\n\n  module.exports = function(_arg) {\n    var STDERR, STDIN, STDOUT, element, input, model, pre;\n    STDIN = _arg.STDIN, STDOUT = _arg.STDOUT, STDERR = _arg.STDERR;\n    model = {\n      submit: function(event) {\n        var command;\n        event.preventDefault();\n        command = input.value;\n        input.value = \"\";\n        STDIN(command);\n        return input.value = \"\";\n      }\n    };\n    STDOUT(function(data) {\n      return pre.appendChild(document.createTextNode(data + \"\\n\"));\n    });\n    STDERR(function(data) {\n      var errSpan;\n      errSpan = document.createElement(\"span\");\n      errSpan.textContent = data + \"\\n\";\n      errSpan.className = \"error\";\n      return pre.appendChild(errSpan);\n    });\n    applyStylesheet(require(\"./style/terminal\"), \"terminal\");\n    element = template(model);\n    document.body.appendChild(element);\n    input = element.getElementsByTagName(\"input\")[0];\n    pre = element.getElementsByTagName(\"pre\")[0];\n    return element;\n  };\n\n}).call(this);\n",
+      "type": "blob"
+    },
+    "test/os": {
+      "path": "test/os",
+      "content": "(function() {\n  var OS, Pipe, Process, cat, echo, _ref;\n\n  _ref = OS = require(\"../os\"), Process = _ref.Process, Pipe = _ref.Pipe;\n\n  echo = PACKAGE.distribution.echo.content;\n\n  cat = PACKAGE.distribution.cat.content;\n\n  describe(\"OS\", function() {\n    return describe(\"pipes\", function() {\n      it(\"should pass data from one process to another\", function(done) {\n        var p1, p2, pipeline;\n        p1 = Process.exec(echo, [\"hello\", \"duderman\"]);\n        p2 = Process.exec(cat);\n        pipeline = Pipe.connect(p1, p2);\n        return pipeline.STDOUT(function(data) {\n          assert.equal(data, \"hello duderman\");\n          return done();\n        });\n      });\n      return it(\"should work with one proc\", function(done) {\n        var p1, pipeline;\n        p1 = Process.exec(echo, [\"hello\", \"duderman\"]);\n        pipeline = Pipe.connect(p1);\n        return pipeline.STDOUT(function(data) {\n          assert.equal(data, \"hello duderman\");\n          return done();\n        });\n      });\n    });\n  });\n\n}).call(this);\n",
+      "type": "blob"
+    },
+    "test/process": {
+      "path": "test/process",
+      "content": "(function() {\n  var Process;\n\n  Process = require(\"../process\");\n\n  describe(\"process\", function() {\n    it(\"should spawn a web worker and do stuff\", function(done) {\n      var p;\n      p = Process.exec(\"STDOUT('hello world')\");\n      return p.STDOUT(function(data) {\n        assert.equal(data, \"hello world\");\n        return done();\n      });\n    });\n    return describe(\"echo\", function() {\n      var echo;\n      echo = PACKAGE.distribution.echo.content;\n      return it(\"should echo command line args\", function(done) {\n        var p;\n        p = Process.exec(echo, [\"hello\", \"duderman\"]);\n        return p.STDOUT(function(data) {\n          assert.equal(data, \"hello duderman\");\n          return done();\n        });\n      });\n    });\n  });\n\n}).call(this);\n",
+      "type": "blob"
+    },
+    "yes": {
+      "path": "yes",
+      "content": "(function() {\n  var token;\n\n  token = ARGV[0] || \"y\";\n\n  setInterval(function() {\n    return STDOUT(token);\n  }, 0);\n\n}).call(this);\n",
       "type": "blob"
     },
     "lib/hamlet-runtime": {
