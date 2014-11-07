@@ -6,8 +6,8 @@ Create an run a process. (A fancily wrapped web worker).
     # TODO: Is there a better way to handle system bootstrapping?
     boot = PACKAGE.distribution.proc_setup.content
 
-    module.exports = 
-      exec: (programCode, args=[]) ->
+    module.exports =
+      spawn: (programCode, args=[]) ->
 
         # Set up program environment with a wrapper
         # that provides STDOUT, ARGV, and anything else this "OS" provides
@@ -26,12 +26,12 @@ Create an run a process. (A fancily wrapped web worker).
           "ARGV=#{JSON.stringify(args)};\n", # Set up ARGV
           boot
         ], type: "application/javascript"))
-  
+
         worker = new Worker(resourceUrl)
-  
+
         worker.onmessage = ({data}) ->
           {type, message} = data
-  
+
           switch type
             when "STDOUT"
               handlers.forEach (handler) ->
@@ -44,16 +44,16 @@ Create an run a process. (A fancily wrapped web worker).
               systemCall[method](args...)
             else
               console.log "Unknown type"
-  
+
         worker.onerror = (e) ->
           console.log e
           errHandlers.forEach (handler) ->
             handler e
-  
+
         # TODO: should we only allow one handler per channel?
         handlers = []
         errHandlers = []
-  
+
         STDIN: (data) ->
           # Pass data to process' STDIN
           worker.postMessage

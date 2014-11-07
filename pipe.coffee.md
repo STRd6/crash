@@ -4,7 +4,7 @@ Pipe
 Connect processes!
 
     # TODO: Figure out how to get a decent buffer dealy
-    # TODO: Maybe keep a little buffer to collect data before a handler is 
+    # TODO: Maybe keep a little buffer to collect data before a handler is
     # attached
     Buffer = ->
       outFn = null
@@ -16,7 +16,7 @@ Connect processes!
         (handler) ->
           outFn = handler
 
-    module.exports = 
+    module.exports =
       Buffer: Buffer
 
       connect: (procs...) ->

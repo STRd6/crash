@@ -4,7 +4,7 @@ Shell
 Execute commands, parse with a bash like syntax.
 
 TODO: This should be a 'workerspace' program. Ideally we'll be able to require
-the system library instead of os which will wrap the os functions with system 
+the system library instead of os which will wrap the os functions with system
 calls.
 
     {Pipe, Process} = OS = require "./os"
@@ -28,7 +28,7 @@ Look up executable.
         unless executable = executables[command]
           err.IN "No command '#{command}' found"
 
-        proc = Process.exec(executable, args)
+        proc = Process.spawn(executable, args)
 
       run = (line) ->
         procs = line.split(/\|/).map(exec)

@@ -21,7 +21,7 @@ Execute input and display output.
 
       STDOUT (data) ->
         pre.appendChild document.createTextNode(data + "\n")
-      
+
       STDERR (data) ->
         errSpan = document.createElement("span")
         errSpan.textContent = data + "\n"
